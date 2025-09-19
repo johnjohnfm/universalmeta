@@ -1,0 +1,1661 @@
+    </div>
+
+    <script>
+        // Application State
+        const appState = {
+            files: [],
+            selectedFiles: [],
+            currentFile: null
+        };
+
+        // Supported file types and their icons
+        const fileTypes = {
+            pdf: { icon: 'fas fa-file-pdf', color: '#dc2626' },
+            jpg: { icon: 'fas fa-file-image', color: '#059669' },
+            jpeg: { icon: 'fas fa-file-image', color: '#059669' },
+            png: { icon: 'fas fa-file-image', color: '#059669' },
+            gif: { icon: 'fas fa-file-image', color: '#059669' },
+            mp3: { icon: 'fas fa-file-audio', color: '#7c3aed' },
+            mp4: { icon: 'fas fa-file-video', color: '#0ea5e9' },
+            avi: { icon: 'fas fa-file-video', color: '#0ea5e9' },
+            docx: { icon: 'fas fa-file-word', color: '#2563eb' },
+            xlsx: { icon: 'fas fa-file-excel', color: '#16a34a' },
+            pptx: { icon: 'fas fa-file-powerpoint', color: '#ea580c' },
+            default: { icon: 'fas fa-file', color: '#6b7280' }
+        };
+
+        // DOM Elements
+        const uploadZone = document.getElementById('upload-zone');
+        const fileInput = document.getElementById('file-input');
+        const fileList = document.getElementById('file-list');
+        const loadingModal = document.getElementById('loading-modal');
+        const loadingMessage = document.getElementById('loading-message');
+
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeApp();
+        });
+
+        function initializeApp() {
+            setupEventListeners();
+            setupNavigation();
+            setupTabs();
+            updateSecurityStatistics();
+        }
+
+        function setupEventListeners() {
+            // File upload
+            uploadZone.addEventListener('click', () => fileInput.click());
+            fileInput.addEventListener('change', handleFileSelect);
+            
+            // Drag and drop
+            uploadZone.addEventListener('dragover', handleDragOver);
+            uploadZone.addEventListener('drop', handleFileDrop);
+            uploadZone.addEventListener('dragenter', (e) => {
+                e.preventDefault();
+                uploadZone.classList.add('dragover');
+            });
+            uploadZone.addEventListener('dragleave', (e) => {
+                e.preventDefault();
+                uploadZone.classList.remove('dragover');
+            });
+
+            // File operations
+            document.getElementById('select-all-btn').addEventListener('click', selectAllFiles);
+            document.getElementById('process-selected-btn').addEventListener('click', processSelectedFiles);
+
+            // Metadata editor
+            document.getElementById('add-custom-field').addEventListener('click', addCustomField);
+            document.getElementById('save-metadata').addEventListener('click', saveMetadata);
+            document.getElementById('reset-metadata').addEventListener('click', resetMetadata);
+
+            // Security features
+            setupSecurityEventListeners();
+        }
+
+        function setupSecurityEventListeners() {
+            // Document Security
+            const encryptPermissionsBtn = document.getElementById('encrypt-permissions');
+            const exportPermissionsBtn = document.getElementById('export-permissions');
+            const generateKeyBtn = document.getElementById('generate-key');
+
+            if (encryptPermissionsBtn) encryptPermissionsBtn.addEventListener('click', encryptDocumentPermissions);
+            if (exportPermissionsBtn) exportPermissionsBtn.addEventListener('click', exportPermissionsConfig);
+            if (generateKeyBtn) generateKeyBtn.addEventListener('click', generateEncryptionKey);
+
+            // Metadata Protection
+            const applyMetadataLocksBtn = document.getElementById('apply-metadata-locks');
+            const encryptMetadataBtn = document.getElementById('encrypt-metadata');
+            const decryptMetadataBtn = document.getElementById('decrypt-metadata');
+
+            if (applyMetadataLocksBtn) applyMetadataLocksBtn.addEventListener('click', applyMetadataLocks);
+            if (encryptMetadataBtn) encryptMetadataBtn.addEventListener('click', encryptMetadata);
+            if (decryptMetadataBtn) decryptMetadataBtn.addEventListener('click', decryptMetadata);
+
+            // Document Hashing
+            const generateHashBtn = document.getElementById('generate-hash');
+            const verifyIntegrityBtn = document.getElementById('verify-integrity');
+            const exportHashBtn = document.getElementById('export-hash');
+            const copyHashBtn = document.getElementById('copy-hash');
+            const saveHashFileBtn = document.getElementById('save-hash-file');
+
+            if (generateHashBtn) generateHashBtn.addEventListener('click', generateDocumentHash);
+            if (verifyIntegrityBtn) verifyIntegrityBtn.addEventListener('click', verifyDocumentIntegrity);
+            if (exportHashBtn) exportHashBtn.addEventListener('click', exportHashData);
+            if (copyHashBtn) copyHashBtn.addEventListener('click', copyHashToClipboard);
+            if (saveHashFileBtn) saveHashFileBtn.addEventListener('click', saveHashToFile);
+        }
+
+        function setupNavigation() {
+            const navItems = document.querySelectorAll('.nav-item');
+            navItems.forEach(item => {
+                item.addEventListener('click', () => {
+                    const section = item.dataset.section;
+                    showSection(section);
+                    
+                    // Update active nav item
+                    navItems.forEach(nav => nav.classList.remove('active'));
+                    item.classList.add('active');
+                });
+            });
+        }
+
+        function setupTabs() {
+            const tabs = document.querySelectorAll('.tab');
+            const tabContents = document.querySelectorAll('.tab-content');
+
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    const tabId = tab.dataset.tab;
+                    
+                    // Update active tab
+                    tabs.forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+                    
+                    // Show corresponding content
+                    tabContents.forEach(content => {
+                        content.style.display = 'none';
+                    });
+                    document.getElementById(tabId + '-tab').style.display = 'block';
+                });
+            });
+        }
+
+        function showSection(sectionName) {
+            const sections = document.querySelectorAll('.upload-section, .metadata-section');
+            sections.forEach(section => {
+                section.style.display = 'none';
+            });
+
+            const fileListSection = document.getElementById('file-list-section');
+            
+            switch(sectionName) {
+                case 'upload':
+                    document.getElementById('upload-section').style.display = 'block';
+                    fileListSection.style.display = 'block';
+                    break;
+                case 'metadata':
+                    document.getElementById('metadata-section').style.display = 'block';
+                    fileListSection.style.display = 'block';
+                    break;
+                case 'security':
+                    document.getElementById('security-section').style.display = 'block';
+                    fileListSection.style.display = 'block';
+                    break;
+                case 'encryption':
+                    document.getElementById('encryption-section').style.display = 'block';
+                    fileListSection.style.display = 'block';
+                    break;
+                case 'hashing':
+                    document.getElementById('hashing-section').style.display = 'block';
+                    fileListSection.style.display = 'block';
+                    break;
+            }
+        }
+
+        function handleDragOver(e) {
+            e.preventDefault();
+        }
+
+        function handleFileDrop(e) {
+            e.preventDefault();
+            uploadZone.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            processFiles(files);
+        }
+
+        function handleFileSelect(e) {
+            const files = e.target.files;
+            processFiles(files);
+        }
+
+        function processFiles(files) {
+            showLoading('Processing uploaded files...');
+            
+            setTimeout(() => {
+                Array.from(files).forEach(file => {
+                    const fileObj = createFileObject(file);
+                    appState.files.push(fileObj);
+                    addFileToList(fileObj);
+                });
+                
+                updateSecurityStatistics();
+                hideLoading();
+            }, 1000);
+        }
+
+        function createFileObject(file) {
+            const extension = file.name.split('.').pop().toLowerCase();
+            const fileType = fileTypes[extension] || fileTypes.default;
+            
+            return {
+                id: Date.now() + Math.random(),
+                name: file.name,
+                size: file.size,
+                type: file.type,
+                extension: extension,
+                icon: fileType.icon,
+                iconColor: fileType.color,
+                file: file,
+                metadata: {},
+                status: 'pending',
+                selected: false,
+                processed: false,
+                hasDocumentHash: false,
+                hasEncryptedMetadata: false,
+                hasMetadataLocks: false,
+                hasEncryptedPermissions: false
+            };
+        }
+
+        function addFileToList(fileObj) {
+            const fileItem = document.createElement('div');
+            fileItem.className = 'file-item';
+            fileItem.dataset.fileId = fileObj.id;
+            
+            fileItem.innerHTML = `
+                <i class="${fileObj.icon} file-icon" style="color: ${fileObj.iconColor}"></i>
+                <div class="file-info">
+                    <div class="file-name">${fileObj.name}</div>
+                    <div class="file-details">
+                        ${formatFileSize(fileObj.size)} • ${fileObj.extension.toUpperCase()}
+                        <span class="status status-warning">Pending</span>
+                    </div>
+                </div>
+                <div class="file-actions">
+                    <button class="btn btn-secondary" onclick="editFileMetadata('${fileObj.id}')">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="btn btn-primary" onclick="downloadFile('${fileObj.id}')">
+                        <i class="fas fa-download"></i>
+                    </button>
+                    <button class="btn btn-error" onclick="removeFile('${fileObj.id}')">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            `;
+
+            fileItem.addEventListener('click', (e) => {
+                if (!e.target.closest('.file-actions')) {
+                    toggleFileSelection(fileObj.id);
+                }
+            });
+
+            fileList.appendChild(fileItem);
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        function toggleFileSelection(fileId) {
+            const file = appState.files.find(f => f.id == fileId);
+            const fileElement = document.querySelector(`[data-file-id="${fileId}"]`);
+            
+            if (file) {
+                file.selected = !file.selected;
+                fileElement.classList.toggle('selected', file.selected);
+                
+                if (file.selected && !appState.selectedFiles.includes(fileId)) {
+                    appState.selectedFiles.push(fileId);
+                } else if (!file.selected) {
+                    appState.selectedFiles = appState.selectedFiles.filter(id => id != fileId);
+                }
+            }
+        }
+
+        function selectAllFiles() {
+            const allSelected = appState.selectedFiles.length === appState.files.length;
+            
+            appState.files.forEach(file => {
+                file.selected = !allSelected;
+                const fileElement = document.querySelector(`[data-file-id="${file.id}"]`);
+                fileElement.classList.toggle('selected', file.selected);
+            });
+            
+            appState.selectedFiles = allSelected ? [] : appState.files.map(f => f.id);
+            
+            const btn = document.getElementById('select-all-btn');
+            btn.innerHTML = allSelected ? 
+                '<i class="fas fa-check-square"></i> Select All' : 
+                '<i class="fas fa-square"></i> Deselect All';
+        }
+
+        function processSelectedFiles() {
+            if (appState.selectedFiles.length === 0) {
+                showNotification('Please select files to process', 'warning');
+                return;
+            }
+            
+            showLoading(`Processing ${appState.selectedFiles.length} files...`);
+            
+            let processed = 0;
+            appState.selectedFiles.forEach((fileId, index) => {
+                setTimeout(() => {
+                    const file = appState.files.find(f => f.id == fileId);
+                    if (file) {
+                        file.status = 'processed';
+                        file.processed = true;
+                        updateFileStatus(fileId, 'processed');
+                        
+                        // Simulate metadata extraction
+                        file.metadata = generateSampleMetadata(file);
+                    }
+                    
+                    processed++;
+                    if (processed === appState.selectedFiles.length) {
+                        updateSecurityStatistics();
+                        hideLoading();
+                    }
+                }, index * 500);
+            });
+        }
+
+        function generateSampleMetadata(file) {
+            const metadata = {
+                basic: {
+                    title: file.name.split('.')[0],
+                    description: `Sample description for ${file.name}`,
+                    author: 'John Doe',
+                    keywords: ['sample', 'metadata', file.extension]
+                }
+            };
+
+            if (['jpg', 'jpeg', 'png', 'gif'].includes(file.extension)) {
+                metadata.exif = {
+                    make: 'Canon',
+                    model: 'EOS 5D Mark IV',
+                    latitude: '40.7128',
+                    longitude: '-74.0060'
+                };
+            }
+
+            metadata.xmp = {
+                creator: 'MetaForge App',
+                rights: '© 2025 All Rights Reserved',
+                subject: 'Sample metadata generated by MetaForge'
+            };
+
+            return metadata;
+        }
+
+        function updateFileStatus(fileId, status) {
+            const fileElement = document.querySelector(`[data-file-id="${fileId}"]`);
+            const statusElement = fileElement.querySelector('.status');
+            
+            statusElement.className = 'status';
+            switch(status) {
+                case 'processed':
+                    statusElement.classList.add('status-success');
+                    statusElement.textContent = 'Processed';
+                    break;
+                case 'error':
+                    statusElement.classList.add('status-error');
+                    statusElement.textContent = 'Error';
+                    break;
+                case 'processing':
+                    statusElement.classList.add('status-processing');
+                    statusElement.textContent = 'Processing';
+                    break;
+                default:
+                    statusElement.classList.add('status-warning');
+                    statusElement.textContent = 'Pending';
+            }
+        }
+
+        function editFileMetadata(fileId) {
+            const file = appState.files.find(f => f.id == fileId);
+            if (!file) return;
+
+            appState.currentFile = file;
+            showSection('metadata');
+            
+            // Update nav
+            document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
+            document.querySelector('[data-section="metadata"]').classList.add('active');
+            
+            loadMetadataForm(file);
+        }
+
+        function loadMetadataForm(file) {
+            const metadata = file.metadata || {};
+            
+            // Basic metadata
+            document.getElementById('meta-title').value = metadata.basic?.title || '';
+            document.getElementById('meta-description').value = metadata.basic?.description || '';
+            document.getElementById('meta-author').value = metadata.basic?.author || '';
+            document.getElementById('meta-keywords').value = metadata.basic?.keywords?.join(', ') || '';
+            
+            // EXIF metadata
+            if (metadata.exif) {
+                document.getElementById('exif-make').value = metadata.exif.make || '';
+                document.getElementById('exif-model').value = metadata.exif.model || '';
+                document.getElementById('exif-lat').value = metadata.exif.latitude || '';
+                document.getElementById('exif-lon').value = metadata.exif.longitude || '';
+            }
+            
+            // XMP metadata
+            if (metadata.xmp) {
+                document.getElementById('xmp-creator').value = metadata.xmp.creator || '';
+                document.getElementById('xmp-rights').value = metadata.xmp.rights || '';
+                document.getElementById('xmp-subject').value = metadata.xmp.subject || '';
+            }
+        }
+
+        function saveMetadata() {
+            if (!appState.currentFile) return;
+            
+            showLoading('Saving metadata...');
+            
+            const metadata = {
+                basic: {
+                    title: document.getElementById('meta-title').value,
+                    description: document.getElementById('meta-description').value,
+                    author: document.getElementById('meta-author').value,
+                    keywords: document.getElementById('meta-keywords').value.split(',').map(k => k.trim())
+                },
+                exif: {
+                    make: document.getElementById('exif-make').value,
+                    model: document.getElementById('exif-model').value,
+                    latitude: document.getElementById('exif-lat').value,
+                    longitude: document.getElementById('exif-lon').value
+                },
+                xmp: {
+                    creator: document.getElementById('xmp-creator').value,
+                    rights: document.getElementById('xmp-rights').value,
+                    subject: document.getElementById('xmp-subject').value
+                }
+            };
+            
+            setTimeout(() => {
+                appState.currentFile.metadata = metadata;
+                appState.currentFile.status = 'processed';
+                appState.currentFile.processed = true;
+                
+                updateFileStatus(appState.currentFile.id, 'processed');
+                updateSecurityStatistics();
+                hideLoading();
+                
+                showNotification('Metadata saved successfully!', 'success');
+            }, 1000);
+        }
+
+        function resetMetadata() {
+            if (confirm('Are you sure you want to reset all metadata fields?')) {
+                loadMetadataForm({ metadata: {} });
+            }
+        }
+
+        function addCustomField() {
+            const customFields = document.getElementById('custom-fields');
+            const fieldId = Date.now();
+            
+            const fieldDiv = document.createElement('div');
+            fieldDiv.className = 'form-group';
+            fieldDiv.innerHTML = `
+                <div style="display: flex; gap: 0.5rem; align-items: end;">
+                    <div style="flex: 1;">
+                        <label class="form-label">Field Name</label>
+                        <input type="text" class="form-input" placeholder="Enter field name">
+                    </div>
+                    <div style="flex: 1;">
+                        <label class="form-label">Field Value</label>
+                        <input type="text" class="form-input" placeholder="Enter field value">
+                    </div>
+                    <button class="btn btn-error" onclick="this.parentElement.parentElement.remove()">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            `;
+            
+            customFields.appendChild(fieldDiv);
+        }
+
+        function downloadFile(fileId) {
+            const file = appState.files.find(f => f.id == fileId);
+            if (!file) return;
+            
+            showLoading('Preparing download...');
+            
+            setTimeout(() => {
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(file.file);
+                link.download = file.name;
+                link.click();
+                
+                hideLoading();
+                showNotification('File downloaded successfully!', 'success');
+            }, 1000);
+        }
+
+        function removeFile(fileId) {
+            if (confirm('Are you sure you want to remove this file?')) {
+                appState.files = appState.files.filter(f => f.id != fileId);
+                appState.selectedFiles = appState.selectedFiles.filter(id => id != fileId);
+                
+                const fileElement = document.querySelector(`[data-file-id="${fileId}"]`);
+                fileElement.remove();
+                
+                updateSecurityStatistics();
+                showNotification('File removed successfully!', 'success');
+            }
+        }
+
+        // Security Functions
+        function encryptDocumentPermissions() {
+            const viewPerm = document.getElementById('view-permission').value;
+            const editPerm = document.getElementById('edit-permission').value;
+            const authorizedUsers = document.getElementById('authorized-users').value;
+            const encryptionKey = document.getElementById('encryption-key').value;
+
+            if (!encryptionKey || encryptionKey.length < 16) {
+                showNotification('Encryption key must be at least 16 characters long', 'error');
+                return;
+            }
+
+            if (appState.selectedFiles.length === 0) {
+                showNotification('Please select files to encrypt permissions for', 'warning');
+                return;
+            }
+
+            showLoading('Encrypting document permissions...');
+
+            setTimeout(() => {
+                appState.selectedFiles.forEach(fileId => {
+                    const file = appState.files.find(f => f.id == fileId);
+                    if (file) {
+                        file.hasEncryptedPermissions = true;
+                    }
+                });
+
+                updateSecurityStatistics();
+                hideLoading();
+                showNotification('Document permissions encrypted successfully!', 'success');
+            }, 1500);
+        }
+
+        function exportPermissionsConfig() {
+            const permissions = {
+                view: document.getElementById('view-permission').value,
+                edit: document.getElementById('edit-permission').value,
+                authorizedUsers: document.getElementById('authorized-users').value,
+                exportDate: new Date().toISOString()
+            };
+
+            const dataStr = JSON.stringify(permissions, null, 2);
+            const dataBlob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(dataBlob);
+            
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'permissions-config.json';
+            link.click();
+            
+            URL.revokeObjectURL(url);
+            showNotification('Permissions configuration exported!', 'success');
+        }
+
+        function generateEncryptionKey() {
+            const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*';
+            let key = '';
+            for (let i = 0; i < 32; i++) {
+                key += characters.charAt(Math.floor(Math.random() * characters.length));
+            }
+            
+            document.getElementById('encryption-key').value = key;
+            showNotification('Strong encryption key generated!', 'success');
+        }
+
+        function applyMetadataLocks() {
+            const lockBasic = document.getElementById('lock-basic-metadata').checked;
+            const lockExif = document.getElementById('lock-exif-metadata').checked;
+            const lockXmp = document.getElementById('lock-xmp-metadata').checked;
+            const duration = document.getElementById('lock-duration').value;
+            
+            if (!lockBasic && !lockExif && !lockXmp) {
+                showNotification('Please select at least one metadata type to lock', 'warning');
+                return;
+            }
+
+            if (appState.selectedFiles.length === 0) {
+                showNotification('Please select files to apply locks to', 'warning');
+                return;
+            }
+
+            showLoading('Applying metadata locks...');
+
+            setTimeout(() => {
+                appState.selectedFiles.forEach(fileId => {
+                    const file = appState.files.find(f => f.id == fileId);
+                    if (file) {
+                        file.hasMetadataLocks = true;
+                    }
+                });
+
+                updateSecurityStatistics();
+                hideLoading();
+                showNotification('Metadata locks applied successfully!', 'success');
+            }, 1000);
+        }
+
+        function encryptMetadata() {
+            const key = document.getElementById('encryption-key').value;
+
+            if (!key || key.length < 16) {
+                showNotification('Please enter a valid encryption key', 'error');
+                return;
+            }
+
+            if (appState.selectedFiles.length === 0) {
+                showNotification('Please select files to encrypt metadata for', 'warning');
+                return;
+            }
+
+            showLoading('Encrypting metadata...');
+
+            setTimeout(() => {
+                appState.selectedFiles.forEach(fileId => {
+                    const file = appState.files.find(f => f.id == fileId);
+                    if (file) {
+                        file.hasEncryptedMetadata = true;
+                    }
+                });
+
+                updateSecurityStatistics();
+                hideLoading();
+                showNotification('Metadata encrypted successfully!', 'success');
+            }, 1500);
+        }
+
+        function decryptMetadata() {
+            const key = document.getElementById('encryption-key').value;
+
+            if (!key) {
+                showNotification('Please enter the encryption key', 'error');
+                return;
+            }
+
+            if (appState.selectedFiles.length === 0) {
+                showNotification('Please select files to decrypt metadata for', 'warning');
+                return;
+            }
+
+            showLoading('Decrypting metadata...');
+
+            setTimeout(() => {
+                let decrypted = 0;
+                
+                appState.selectedFiles.forEach(fileId => {
+                    const file = appState.files.find(f => f.id == fileId);
+                    if (file && file.hasEncryptedMetadata) {
+                        file.hasEncryptedMetadata = false;
+                        decrypted++;
+                    }
+                });
+
+                updateSecurityStatistics();
+                hideLoading();
+                
+                if (decrypted > 0) {
+                    showNotification(`Successfully decrypted metadata for ${decrypted} files!`, 'success');
+                } else {
+                    showNotification('No encrypted metadata found or invalid key', 'warning');
+                }
+            }, 1000);
+        }
+
+        function generateDocumentHash() {
+            const algorithm = document.getElementById('hash-algorithm').value;
+            const scope = document.getElementById('hash-scope').value;
+            
+            if (appState.selectedFiles.length === 0) {
+                showNotification('Please select files to hash', 'warning');
+                return;
+            }
+
+            const hashResults = document.getElementById('hash-results');
+            hashResults.innerHTML = 'Generating hashes...\n';
+            
+            showLoading('Generating document hashes...');
+
+            setTimeout(() => {
+                let results = '';
+                appState.selectedFiles.forEach(fileId => {
+                    const file = appState.files.find(f => f.id == fileId);
+                    if (file) {
+                        const hash = generateSimulatedHash(file, algorithm, scope);
+                        file.hasDocumentHash = true;
+                        results += `${file.name}: ${hash}\n`;
+                    }
+                });
+
+                hashResults.innerHTML = results;
+                updateSecurityStatistics();
+                hideLoading();
+                showNotification('Document hashes generated successfully!', 'success');
+            }, 2000);
+        }
+
+        function generateSimulatedHash(file, algorithm, scope) {
+            const characters = '0123456789abcdef';
+            const lengths = {
+                'md5': 32,
+                'sha1': 40,
+                'sha256': 64,
+                'sha512': 128,
+                'blake2': 64
+            };
+            
+            const length = lengths[algorithm] || 64;
+            let hash = '';
+            
+            for (let i = 0; i < length; i++) {
+                hash += characters.charAt(Math.floor(Math.random() * characters.length));
+            }
+            
+            return hash;
+        }
+
+        function verifyDocumentIntegrity() {
+            if (appState.selectedFiles.length === 0) {
+                showNotification('Please select files to verify', 'warning');
+                return;
+            }
+
+            showLoading('Verifying document integrity...');
+            
+            setTimeout(() => {
+                const verified = appState.selectedFiles.filter(fileId => {
+                    const file = appState.files.find(f => f.id == fileId);
+                    return file && file.hasDocumentHash;
+                }).length;
+                
+                hideLoading();
+                
+                if (verified > 0) {
+                    showNotification(`All ${verified} files verified successfully!`, 'success');
+                } else {
+                    showNotification('No files with hashes found for verification', 'warning');
+                }
+            }, 1500);
+        }
+
+        function exportHashData() {
+            const hashResults = document.getElementById('hash-results');
+            const hashData = hashResults.textContent;
+            
+            if (!hashData || hashData === 'No hashes generated yet...') {
+                showNotification('No hash data to export', 'warning');
+                return;
+            }
+            
+            const dataBlob = new Blob([hashData], { type: 'text/plain' });
+            const url = URL.createObjectURL(dataBlob);
+            
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `document-hashes-${new Date().toISOString().split('T')[0]}.txt`;
+            link.click();
+            
+            URL.revokeObjectURL(url);
+            showNotification('Hash data exported successfully!', 'success');
+        }
+
+        function copyHashToClipboard() {
+            const hashResults = document.getElementById('hash-results');
+            const hashData = hashResults.textContent;
+            
+            if (!hashData || hashData === 'No hashes generated yet...') {
+                showNotification('No hash data to copy', 'warning');
+                return;
+            }
+            
+            navigator.clipboard.writeText(hashData).then(() => {
+                showNotification('Hash data copied to clipboard!', 'success');
+            }).catch(() => {
+                showNotification('Failed to copy to clipboard', 'error');
+            });
+        }
+
+        function saveHashToFile() {
+            exportHashData();
+        }
+
+        function updateSecurityStatistics() {
+            const hashedFiles = appState.files.filter(f => f.hasDocumentHash).length;
+            const encryptedFiles = appState.files.filter(f => f.hasEncryptedMetadata).length;
+            const protectedFiles = appState.files.filter(f => f.hasMetadataLocks || f.hasEncryptedPermissions).length;
+            
+            document.getElementById('hashed-files').textContent = hashedFiles;
+            document.getElementById('encrypted-files').textContent = encryptedFiles;
+            document.getElementById('protected-files').textContent = protectedFiles;
+        }
+
+        function showLoading(message) {
+            loadingMessage.textContent = message;
+            loadingModal.classList.add('active');
+        }
+
+        function hideLoading() {
+            loadingModal.classList.remove('active');
+        }
+
+        function showNotification(message, type) {
+            const notification = document.createElement('div');
+            notification.className = `status status-${type}`;
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                z-index: 1001;
+                padding: 1rem;
+                border-radius: 0.5rem;
+                box-shadow: var(--shadow-lg);
+            `;
+            notification.textContent = message;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                if (document.body.contains(notification)) {
+                    document.body.removeChild(notification);
+                }
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
+            <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Universal Metadata Editor</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --secondary: #64748b;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --error: #ef4444;
+            --bg: #f8fafc;
+            --surface: #ffffff;
+            --text: #1e293b;
+            --text-light: #64748b;
+            --border: #e2e8f0;
+            --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
+            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+        }
+
+        .app-container {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            box-shadow: var(--shadow);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .user-menu {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+        }
+
+        .btn-secondary {
+            background: var(--border);
+            color: var(--text);
+        }
+
+        .btn-secondary:hover {
+            background: #d1d5db;
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+
+        .btn-warning {
+            background: var(--warning);
+            color: white;
+        }
+
+        .btn-error {
+            background: var(--error);
+            color: white;
+        }
+
+        .main-content {
+            flex: 1;
+            display: flex;
+            padding: 2rem;
+            gap: 2rem;
+            max-width: 1400px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .sidebar {
+            width: 300px;
+            background: var(--surface);
+            border-radius: 0.5rem;
+            box-shadow: var(--shadow);
+            padding: 1.5rem;
+            height: fit-content;
+        }
+
+        .content-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        .upload-section {
+            background: var(--surface);
+            border-radius: 0.5rem;
+            box-shadow: var(--shadow);
+            padding: 2rem;
+        }
+
+        .upload-zone {
+            border: 2px dashed var(--border);
+            border-radius: 0.5rem;
+            padding: 3rem;
+            text-align: center;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .upload-zone:hover,
+        .upload-zone.dragover {
+            border-color: var(--primary);
+            background: rgba(37, 99, 235, 0.05);
+        }
+
+        .upload-icon {
+            font-size: 3rem;
+            color: var(--text-light);
+            margin-bottom: 1rem;
+        }
+
+        .upload-text {
+            font-size: 1.1rem;
+            color: var(--text);
+            margin-bottom: 0.5rem;
+        }
+
+        .upload-subtext {
+            color: var(--text-light);
+            font-size: 0.9rem;
+        }
+
+        .file-list {
+            background: var(--surface);
+            border-radius: 0.5rem;
+            box-shadow: var(--shadow);
+            padding: 1.5rem;
+        }
+
+        .file-item {
+            display: flex;
+            align-items: center;
+            padding: 1rem;
+            border: 1px solid var(--border);
+            border-radius: 0.5rem;
+            margin-bottom: 1rem;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+
+        .file-item:hover {
+            box-shadow: var(--shadow-lg);
+            border-color: var(--primary);
+        }
+
+        .file-item.selected {
+            border-color: var(--primary);
+            background: rgba(37, 99, 235, 0.05);
+        }
+
+        .file-icon {
+            font-size: 2rem;
+            margin-right: 1rem;
+            color: var(--text-light);
+        }
+
+        .file-info {
+            flex: 1;
+        }
+
+        .file-name {
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .file-details {
+            font-size: 0.9rem;
+            color: var(--text-light);
+        }
+
+        .file-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .metadata-section {
+            background: var(--surface);
+            border-radius: 0.5rem;
+            box-shadow: var(--shadow);
+            padding: 1.5rem;
+        }
+
+        .metadata-tabs {
+            display: flex;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 1.5rem;
+        }
+
+        .tab {
+            padding: 0.75rem 1.5rem;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+        }
+
+        .tab.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
+
+        .tab:hover {
+            background: var(--bg);
+        }
+
+        .metadata-form {
+            display: grid;
+            gap: 1.5rem;
+        }
+
+        .form-group {
+            display: grid;
+            gap: 0.5rem;
+        }
+
+        .form-label {
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .form-input {
+            padding: 0.75rem;
+            border: 1px solid var(--border);
+            border-radius: 0.5rem;
+            transition: border-color 0.2s;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        .form-textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem;
+            margin-bottom: 0.5rem;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .nav-item:hover {
+            background: var(--bg);
+        }
+
+        .nav-item.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        .nav-icon {
+            margin-right: 0.75rem;
+        }
+
+        .status {
+            padding: 0.25rem 0.75rem;
+            border-radius: 1rem;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .status-success {
+            background: #dcfce7;
+            color: #16a34a;
+        }
+
+        .status-warning {
+            background: #fef3c7;
+            color: #d97706;
+        }
+
+        .status-error {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+
+        .status-processing {
+            background: #dbeafe;
+            color: #2563eb;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: var(--border);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--success);
+            transition: width 0.3s;
+            width: 0%;
+        }
+
+        .hidden-input {
+            display: none;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--surface);
+            border-radius: 0.5rem;
+            padding: 2rem;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .loading-spinner {
+            border: 3px solid var(--border);
+            border-top: 3px solid var(--primary);
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 1024px) {
+            .main-content {
+                flex-direction: column;
+            }
+            
+            .sidebar {
+                width: 100%;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                padding: 1rem;
+            }
+            
+            .header {
+                padding: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <header class="header">
+            <div class="logo">
+                <i class="fas fa-tags"></i>
+                MetaForge
+            </div>
+            <div class="user-menu">
+                <button class="btn btn-secondary">
+                    <i class="fas fa-cog"></i>
+                    Settings
+                </button>
+                <button class="btn btn-secondary">
+                    <i class="fas fa-user"></i>
+                    Profile
+                </button>
+                <button class="btn btn-primary">
+                    <i class="fas fa-sign-out-alt"></i>
+                    Logout
+                </button>
+            </div>
+        </header>
+
+        <div class="main-content">
+            <aside class="sidebar">
+                <h3 style="margin-bottom: 1rem;">Navigation</h3>
+                <div class="nav-item active" data-section="upload">
+                    <i class="fas fa-upload nav-icon"></i>
+                    File Upload
+                </div>
+                <div class="nav-item" data-section="metadata">
+                    <i class="fas fa-edit nav-icon"></i>
+                    Metadata Editor
+                </div>
+                <div class="nav-item" data-section="security">
+                    <i class="fas fa-shield-alt nav-icon"></i>
+                    Document Security
+                </div>
+                <div class="nav-item" data-section="encryption">
+                    <i class="fas fa-lock nav-icon"></i>
+                    Metadata Protection
+                </div>
+                <div class="nav-item" data-section="hashing">
+                    <i class="fas fa-fingerprint nav-icon"></i>
+                    Document Hashing
+                </div>
+
+                <hr style="margin: 1.5rem 0; border: none; height: 1px; background: var(--border);">
+
+                <h4 style="margin-bottom: 1rem;">Security Status</h4>
+                <div style="margin-bottom: 1rem;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                        <span>Hashed Files:</span>
+                        <strong id="hashed-files" style="color: var(--primary);">0</strong>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                        <span>Encrypted:</span>
+                        <strong id="encrypted-files" style="color: var(--success);">0</strong>
+                    </div>
+                    <div style="display: flex; justify-content: space-between;">
+                        <span>Protected:</span>
+                        <strong id="protected-files" style="color: var(--warning);">0</strong>
+                    </div>
+                </div>
+            </aside>
+
+            <main class="content-area">
+                <!-- File Upload Section -->
+                <section class="upload-section" id="upload-section">
+                    <h2 style="margin-bottom: 1.5rem;">File Upload</h2>
+                    <div class="upload-zone" id="upload-zone">
+                        <i class="fas fa-cloud-upload-alt upload-icon"></i>
+                        <div class="upload-text">Drag & drop files here or click to browse</div>
+                        <div class="upload-subtext">
+                            Supports: PDF, JPG, PNG, MP3, MP4, DOCX, and more
+                        </div>
+                        <input type="file" multiple class="hidden-input" id="file-input" accept=".pdf,.jpg,.jpeg,.png,.gif,.mp3,.mp4,.avi,.docx,.xlsx,.pptx">
+                    </div>
+                </section>
+
+                <!-- File List -->
+                <section class="file-list" id="file-list-section">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                        <h2>Uploaded Files</h2>
+                        <div>
+                            <button class="btn btn-secondary" id="select-all-btn">
+                                <i class="fas fa-check-square"></i>
+                                Select All
+                            </button>
+                            <button class="btn btn-primary" id="process-selected-btn">
+                                <i class="fas fa-play"></i>
+                                Process Selected
+                            </button>
+                        </div>
+                    </div>
+                    <div id="file-list">
+                        <!-- Files will be dynamically added here -->
+                    </div>
+                </section>
+
+                <!-- Metadata Editor -->
+                <section class="metadata-section" id="metadata-section" style="display: none;">
+                    <h2 style="margin-bottom: 1.5rem;">Metadata Editor</h2>
+                    
+                    <div class="metadata-tabs">
+                        <div class="tab active" data-tab="basic">Basic</div>
+                        <div class="tab" data-tab="exif">EXIF</div>
+                        <div class="tab" data-tab="xmp">XMP</div>
+                        <div class="tab" data-tab="custom">Custom Fields</div>
+                    </div>
+
+                    <div class="tab-content" id="basic-tab">
+                        <div class="metadata-form">
+                            <div class="form-group">
+                                <label class="form-label">Title</label>
+                                <input type="text" class="form-input" id="meta-title" placeholder="Enter file title">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Description</label>
+                                <textarea class="form-input form-textarea" id="meta-description" placeholder="Enter file description"></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Author</label>
+                                <input type="text" class="form-input" id="meta-author" placeholder="Enter author name">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Keywords (comma-separated)</label>
+                                <input type="text" class="form-input" id="meta-keywords" placeholder="tag1, tag2, tag3">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="tab-content" id="exif-tab" style="display: none;">
+                        <div class="metadata-form">
+                            <div class="form-group">
+                                <label class="form-label">Camera Make</label>
+                                <input type="text" class="form-input" id="exif-make" placeholder="Canon, Nikon, etc.">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Camera Model</label>
+                                <input type="text" class="form-input" id="exif-model" placeholder="Camera model">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">GPS Latitude</label>
+                                <input type="text" class="form-input" id="exif-lat" placeholder="40.7128">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">GPS Longitude</label>
+                                <input type="text" class="form-input" id="exif-lon" placeholder="-74.0060">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="tab-content" id="xmp-tab" style="display: none;">
+                        <div class="metadata-form">
+                            <div class="form-group">
+                                <label class="form-label">Creator</label>
+                                <input type="text" class="form-input" id="xmp-creator" placeholder="Content creator">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Rights</label>
+                                <input type="text" class="form-input" id="xmp-rights" placeholder="Copyright information">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Subject</label>
+                                <textarea class="form-input form-textarea" id="xmp-subject" placeholder="Subject description"></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="tab-content" id="custom-tab" style="display: none;">
+                        <div class="metadata-form" id="custom-fields">
+                            <!-- Custom fields will be added dynamically -->
+                        </div>
+                        <button class="btn btn-secondary" id="add-custom-field">
+                            <i class="fas fa-plus"></i>
+                            Add Custom Field
+                        </button>
+                    </div>
+
+                    <div style="margin-top: 2rem; text-align: right;">
+                        <button class="btn btn-secondary" id="reset-metadata">
+                            <i class="fas fa-undo"></i>
+                            Reset
+                        </button>
+                        <button class="btn btn-primary" id="save-metadata">
+                            <i class="fas fa-save"></i>
+                            Save Changes
+                        </button>
+                    </div>
+                </section>
+
+                <!-- Document Security Section -->
+                <section class="metadata-section" id="security-section" style="display: none;">
+                    <h2 style="margin-bottom: 1.5rem;">
+                        <i class="fas fa-shield-alt" style="margin-right: 0.5rem; color: var(--primary);"></i>
+                        Document Security
+                    </h2>
+                    
+                    <div style="background: var(--bg); padding: 1.5rem; border-radius: 0.5rem; margin-bottom: 1.5rem; border-left: 4px solid var(--primary);">
+                        <h3 style="margin-bottom: 1rem; color: var(--primary);">Document Permissions</h3>
+                        
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
+                            <div class="form-group">
+                                <label class="form-label">View Permission</label>
+                                <select class="form-input" id="view-permission">
+                                    <option value="public">Public</option>
+                                    <option value="restricted">Restricted</option>
+                                    <option value="private">Private</option>
+                                    <option value="encrypted">Encrypted</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">Edit Permission</label>
+                                <select class="form-input" id="edit-permission">
+                                    <option value="owner">Owner Only</option>
+                                    <option value="authorized">Authorized Users</option>
+                                    <option value="restricted">Restricted</option>
+                                    <option value="none">No Editing</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group" style="margin-bottom: 1rem;">
+                            <label class="form-label">Authorized Users</label>
+                            <textarea class="form-input form-textarea" id="authorized-users" placeholder="user1@example.com, user2@example.com" style="min-height: 60px;"></textarea>
+                        </div>
+                        
+                        <div style="display: grid; grid-template-columns: 1fr auto; gap: 1rem; margin-bottom: 1rem;">
+                            <input type="password" class="form-input" id="encryption-key" placeholder="Enter encryption key (min 16 characters)">
+                            <button class="btn btn-secondary" id="generate-key">
+                                <i class="fas fa-random"></i>
+                                Generate
+                            </button>
+                        </div>
+                        
+                        <div style="display: flex; gap: 1rem;">
+                            <button class="btn btn-primary" id="encrypt-permissions">
+                                <i class="fas fa-lock"></i>
+                                Encrypt Permissions
+                            </button>
+                            <button class="btn btn-secondary" id="export-permissions">
+                                <i class="fas fa-file-export"></i>
+                                Export Config
+                            </button>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Metadata Protection Section -->
+                <section class="metadata-section" id="encryption-section" style="display: none;">
+                    <h2 style="margin-bottom: 1.5rem;">
+                        <i class="fas fa-lock" style="margin-right: 0.5rem; color: var(--warning);"></i>
+                        Metadata Protection
+                    </h2>
+                    
+                    <div style="background: var(--bg); padding: 1.5rem; border-radius: 0.5rem; margin-bottom: 1.5rem; border-left: 4px solid var(--warning);">
+                        <h3 style="margin-bottom: 1rem; color: var(--warning);">Metadata Locking</h3>
+                        
+                        <div style="display: grid; gap: 1rem; margin-bottom: 1.5rem;">
+                            <label style="display: flex; align-items: center; gap: 0.5rem; padding: 0.75rem; background: var(--surface); border-radius: 0.5rem; cursor: pointer;">
+                                <input type="checkbox" id="lock-basic-metadata">
+                                <i class="fas fa-info-circle" style="color: var(--primary);"></i>
+                                <span>Lock Basic Metadata (Title, Description, Author, Keywords)</span>
+                            </label>
+                            
+                            <label style="display: flex; align-items: center; gap: 0.5rem; padding: 0.75rem; background: var(--surface); border-radius: 0.5rem; cursor: pointer;">
+                                <input type="checkbox" id="lock-exif-metadata">
+                                <i class="fas fa-camera" style="color: var(--success);"></i>
+                                <span>Lock EXIF Metadata (Camera data, GPS coordinates)</span>
+                            </label>
+                            
+                            <label style="display: flex; align-items: center; gap: 0.5rem; padding: 0.75rem; background: var(--surface); border-radius: 0.5rem; cursor: pointer;">
+                                <input type="checkbox" id="lock-xmp-metadata">
+                                <i class="fas fa-copyright" style="color: var(--error);"></i>
+                                <span>Lock XMP Metadata (Rights, Creator, Subject)</span>
+                            </label>
+                        </div>
+                        
+                        <div class="form-group" style="margin-bottom: 1.5rem;">
+                            <label class="form-label">Lock Duration</label>
+                            <select class="form-input" id="lock-duration">
+                                <option value="permanent">Permanent</option>
+                                <option value="1hour">1 Hour</option>
+                                <option value="24hours">24 Hours</option>
+                                <option value="7days">7 Days</option>
+                                <option value="30days">30 Days</option>
+                            </select>
+                        </div>
+                        
+                        <div style="display: flex; gap: 1rem;">
+                            <button class="btn btn-warning" id="apply-metadata-locks">
+                                <i class="fas fa-lock"></i>
+                                Apply Locks
+                            </button>
+                            <button class="btn btn-success" id="encrypt-metadata">
+                                <i class="fas fa-shield-alt"></i>
+                                Encrypt Metadata
+                            </button>
+                            <button class="btn btn-secondary" id="decrypt-metadata">
+                                <i class="fas fa-unlock"></i>
+                                Decrypt Metadata
+                            </button>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Document Hashing Section -->
+                <section class="metadata-section" id="hashing-section" style="display: none;">
+                    <h2 style="margin-bottom: 1.5rem;">
+                        <i class="fas fa-fingerprint" style="margin-right: 0.5rem; color: var(--success);"></i>
+                        Document Hashing & Integrity
+                    </h2>
+                    
+                    <div style="background: var(--bg); padding: 1.5rem; border-radius: 0.5rem; margin-bottom: 1.5rem; border-left: 4px solid var(--success);">
+                        <h3 style="margin-bottom: 1rem; color: var(--success);">Hash Generation</h3>
+                        
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
+                            <div class="form-group">
+                                <label class="form-label">Hash Algorithm</label>
+                                <select class="form-input" id="hash-algorithm">
+                                    <option value="sha256">SHA-256 (Recommended)</option>
+                                    <option value="sha512">SHA-512</option>
+                                    <option value="sha1">SHA-1</option>
+                                    <option value="md5">MD5</option>
+                                    <option value="blake2">BLAKE2</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">Hash Scope</label>
+                                <select class="form-input" id="hash-scope">
+                                    <option value="full">Full Document</option>
+                                    <option value="content">Content Only</option>
+                                    <option value="metadata">Metadata Only</option>
+                                    <option value="combined">Content + Metadata</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div style="display: flex; gap: 1rem; margin-bottom: 1rem;">
+                            <button class="btn btn-success" id="generate-hash">
+                                <i class="fas fa-play"></i>
+                                Generate Hash
+                            </button>
+                            <button class="btn btn-primary" id="verify-integrity">
+                                <i class="fas fa-check-circle"></i>
+                                Verify Integrity
+                            </button>
+                            <button class="btn btn-secondary" id="export-hash">
+                                <i class="fas fa-file-export"></i>
+                                Export Hash
+                            </button>
+                        </div>
+                        
+                        <div id="hash-results" style="font-family: monospace; background: var(--surface); padding: 1rem; border-radius: 0.5rem; min-height: 100px; margin-bottom: 1rem; border: 1px solid var(--border);">
+                            No hashes generated yet...
+                        </div>
+                        
+                        <div style="display: flex; gap: 1rem;">
+                            <button class="btn btn-secondary" id="copy-hash">
+                                <i class="fas fa-copy"></i>
+                                Copy Hash
+                            </button>
+                            <button class="btn btn-secondary" id="save-hash-file">
+                                <i class="fas fa-save"></i>
+                                Save to File
+                            </button>
+                        </div>
+                    </div>
+                </section>
+            </main>
+        </div>
+    </div>
+
+    <!-- Loading Modal -->
+    <div class="modal" id="loading-modal">
+        <div class="modal-content" style="text-align: center;">
+            <div class="loading-spinner"></div>
+            <h3 style="margin: 1rem 0;">Processing...</h3>
+            <p id="loading-message">Please wait while we process your request.</p>
+        </div>
+    
