@@ -1,0 +1,14 @@
+{
+  "name": "universalmeta-api",
+  "version": "1.0.0",
+  "description": "A full-stack metadata editor application.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.17.1",
+    "multer": "^1.4.5"
+  }
+}
