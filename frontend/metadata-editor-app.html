@@ -1,855 +1,4 @@
-    </div>
-
-    <script>
-        // Application State
-        const appState = {
-            files: [],
-            selectedFiles: [],
-            currentFile: null
-        };
-
-        // Supported file types and their icons
-        const fileTypes = {
-            pdf: { icon: 'fas fa-file-pdf', color: '#dc2626' },
-            jpg: { icon: 'fas fa-file-image', color: '#059669' },
-            jpeg: { icon: 'fas fa-file-image', color: '#059669' },
-            png: { icon: 'fas fa-file-image', color: '#059669' },
-            gif: { icon: 'fas fa-file-image', color: '#059669' },
-            mp3: { icon: 'fas fa-file-audio', color: '#7c3aed' },
-            mp4: { icon: 'fas fa-file-video', color: '#0ea5e9' },
-            avi: { icon: 'fas fa-file-video', color: '#0ea5e9' },
-            docx: { icon: 'fas fa-file-word', color: '#2563eb' },
-            xlsx: { icon: 'fas fa-file-excel', color: '#16a34a' },
-            pptx: { icon: 'fas fa-file-powerpoint', color: '#ea580c' },
-            default: { icon: 'fas fa-file', color: '#6b7280' }
-        };
-
-        // DOM Elements
-        const uploadZone = document.getElementById('upload-zone');
-        const fileInput = document.getElementById('file-input');
-        const fileList = document.getElementById('file-list');
-        const loadingModal = document.getElementById('loading-modal');
-        const loadingMessage = document.getElementById('loading-message');
-
-        // Initialize the application
-        document.addEventListener('DOMContentLoaded', function() {
-            initializeApp();
-        });
-
-        function initializeApp() {
-            setupEventListeners();
-            setupNavigation();
-            setupTabs();
-            updateSecurityStatistics();
-        }
-
-        function setupEventListeners() {
-            // File upload
-            uploadZone.addEventListener('click', () => fileInput.click());
-            fileInput.addEventListener('change', handleFileSelect);
-            
-            // Drag and drop
-            uploadZone.addEventListener('dragover', handleDragOver);
-            uploadZone.addEventListener('drop', handleFileDrop);
-            uploadZone.addEventListener('dragenter', (e) => {
-                e.preventDefault();
-                uploadZone.classList.add('dragover');
-            });
-            uploadZone.addEventListener('dragleave', (e) => {
-                e.preventDefault();
-                uploadZone.classList.remove('dragover');
-            });
-
-            // File operations
-            document.getElementById('select-all-btn').addEventListener('click', selectAllFiles);
-            document.getElementById('process-selected-btn').addEventListener('click', processSelectedFiles);
-
-            // Metadata editor
-            document.getElementById('add-custom-field').addEventListener('click', addCustomField);
-            document.getElementById('save-metadata').addEventListener('click', saveMetadata);
-            document.getElementById('reset-metadata').addEventListener('click', resetMetadata);
-
-            // Security features
-            setupSecurityEventListeners();
-        }
-
-        function setupSecurityEventListeners() {
-            // Document Security
-            const encryptPermissionsBtn = document.getElementById('encrypt-permissions');
-            const exportPermissionsBtn = document.getElementById('export-permissions');
-            const generateKeyBtn = document.getElementById('generate-key');
-
-            if (encryptPermissionsBtn) encryptPermissionsBtn.addEventListener('click', encryptDocumentPermissions);
-            if (exportPermissionsBtn) exportPermissionsBtn.addEventListener('click', exportPermissionsConfig);
-            if (generateKeyBtn) generateKeyBtn.addEventListener('click', generateEncryptionKey);
-
-            // Metadata Protection
-            const applyMetadataLocksBtn = document.getElementById('apply-metadata-locks');
-            const encryptMetadataBtn = document.getElementById('encrypt-metadata');
-            const decryptMetadataBtn = document.getElementById('decrypt-metadata');
-
-            if (applyMetadataLocksBtn) applyMetadataLocksBtn.addEventListener('click', applyMetadataLocks);
-            if (encryptMetadataBtn) encryptMetadataBtn.addEventListener('click', encryptMetadata);
-            if (decryptMetadataBtn) decryptMetadataBtn.addEventListener('click', decryptMetadata);
-
-            // Document Hashing
-            const generateHashBtn = document.getElementById('generate-hash');
-            const verifyIntegrityBtn = document.getElementById('verify-integrity');
-            const exportHashBtn = document.getElementById('export-hash');
-            const copyHashBtn = document.getElementById('copy-hash');
-            const saveHashFileBtn = document.getElementById('save-hash-file');
-
-            if (generateHashBtn) generateHashBtn.addEventListener('click', generateDocumentHash);
-            if (verifyIntegrityBtn) verifyIntegrityBtn.addEventListener('click', verifyDocumentIntegrity);
-            if (exportHashBtn) exportHashBtn.addEventListener('click', exportHashData);
-            if (copyHashBtn) copyHashBtn.addEventListener('click', copyHashToClipboard);
-            if (saveHashFileBtn) saveHashFileBtn.addEventListener('click', saveHashToFile);
-        }
-
-        function setupNavigation() {
-            const navItems = document.querySelectorAll('.nav-item');
-            navItems.forEach(item => {
-                item.addEventListener('click', () => {
-                    const section = item.dataset.section;
-                    showSection(section);
-                    
-                    // Update active nav item
-                    navItems.forEach(nav => nav.classList.remove('active'));
-                    item.classList.add('active');
-                });
-            });
-        }
-
-        function setupTabs() {
-            const tabs = document.querySelectorAll('.tab');
-            const tabContents = document.querySelectorAll('.tab-content');
-
-            tabs.forEach(tab => {
-                tab.addEventListener('click', () => {
-                    const tabId = tab.dataset.tab;
-                    
-                    // Update active tab
-                    tabs.forEach(t => t.classList.remove('active'));
-                    tab.classList.add('active');
-                    
-                    // Show corresponding content
-                    tabContents.forEach(content => {
-                        content.style.display = 'none';
-                    });
-                    document.getElementById(tabId + '-tab').style.display = 'block';
-                });
-            });
-        }
-
-        function showSection(sectionName) {
-            const sections = document.querySelectorAll('.upload-section, .metadata-section');
-            sections.forEach(section => {
-                section.style.display = 'none';
-            });
-
-            const fileListSection = document.getElementById('file-list-section');
-            
-            switch(sectionName) {
-                case 'upload':
-                    document.getElementById('upload-section').style.display = 'block';
-                    fileListSection.style.display = 'block';
-                    break;
-                case 'metadata':
-                    document.getElementById('metadata-section').style.display = 'block';
-                    fileListSection.style.display = 'block';
-                    break;
-                case 'security':
-                    document.getElementById('security-section').style.display = 'block';
-                    fileListSection.style.display = 'block';
-                    break;
-                case 'encryption':
-                    document.getElementById('encryption-section').style.display = 'block';
-                    fileListSection.style.display = 'block';
-                    break;
-                case 'hashing':
-                    document.getElementById('hashing-section').style.display = 'block';
-                    fileListSection.style.display = 'block';
-                    break;
-            }
-        }
-
-        function handleDragOver(e) {
-            e.preventDefault();
-        }
-
-        function handleFileDrop(e) {
-            e.preventDefault();
-            uploadZone.classList.remove('dragover');
-            const files = e.dataTransfer.files;
-            processFiles(files);
-        }
-
-        function handleFileSelect(e) {
-            const files = e.target.files;
-            processFiles(files);
-        }
-
-        function processFiles(files) {
-            showLoading('Processing uploaded files...');
-            
-            setTimeout(() => {
-                Array.from(files).forEach(file => {
-                    const fileObj = createFileObject(file);
-                    appState.files.push(fileObj);
-                    addFileToList(fileObj);
-                });
-                
-                updateSecurityStatistics();
-                hideLoading();
-            }, 1000);
-        }
-
-        function createFileObject(file) {
-            const extension = file.name.split('.').pop().toLowerCase();
-            const fileType = fileTypes[extension] || fileTypes.default;
-            
-            return {
-                id: Date.now() + Math.random(),
-                name: file.name,
-                size: file.size,
-                type: file.type,
-                extension: extension,
-                icon: fileType.icon,
-                iconColor: fileType.color,
-                file: file,
-                metadata: {},
-                status: 'pending',
-                selected: false,
-                processed: false,
-                hasDocumentHash: false,
-                hasEncryptedMetadata: false,
-                hasMetadataLocks: false,
-                hasEncryptedPermissions: false
-            };
-        }
-
-        function addFileToList(fileObj) {
-            const fileItem = document.createElement('div');
-            fileItem.className = 'file-item';
-            fileItem.dataset.fileId = fileObj.id;
-            
-            fileItem.innerHTML = `
-                <i class="${fileObj.icon} file-icon" style="color: ${fileObj.iconColor}"></i>
-                <div class="file-info">
-                    <div class="file-name">${fileObj.name}</div>
-                    <div class="file-details">
-                        ${formatFileSize(fileObj.size)} • ${fileObj.extension.toUpperCase()}
-                        <span class="status status-warning">Pending</span>
-                    </div>
-                </div>
-                <div class="file-actions">
-                    <button class="btn btn-secondary" onclick="editFileMetadata('${fileObj.id}')">
-                        <i class="fas fa-edit"></i>
-                    </button>
-                    <button class="btn btn-primary" onclick="downloadFile('${fileObj.id}')">
-                        <i class="fas fa-download"></i>
-                    </button>
-                    <button class="btn btn-error" onclick="removeFile('${fileObj.id}')">
-                        <i class="fas fa-trash"></i>
-                    </button>
-                </div>
-            `;
-
-            fileItem.addEventListener('click', (e) => {
-                if (!e.target.closest('.file-actions')) {
-                    toggleFileSelection(fileObj.id);
-                }
-            });
-
-            fileList.appendChild(fileItem);
-        }
-
-        function formatFileSize(bytes) {
-            if (bytes === 0) return '0 Bytes';
-            const k = 1024;
-            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-            const i = Math.floor(Math.log(bytes) / Math.log(k));
-            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-        }
-
-        function toggleFileSelection(fileId) {
-            const file = appState.files.find(f => f.id == fileId);
-            const fileElement = document.querySelector(`[data-file-id="${fileId}"]`);
-            
-            if (file) {
-                file.selected = !file.selected;
-                fileElement.classList.toggle('selected', file.selected);
-                
-                if (file.selected && !appState.selectedFiles.includes(fileId)) {
-                    appState.selectedFiles.push(fileId);
-                } else if (!file.selected) {
-                    appState.selectedFiles = appState.selectedFiles.filter(id => id != fileId);
-                }
-            }
-        }
-
-        function selectAllFiles() {
-            const allSelected = appState.selectedFiles.length === appState.files.length;
-            
-            appState.files.forEach(file => {
-                file.selected = !allSelected;
-                const fileElement = document.querySelector(`[data-file-id="${file.id}"]`);
-                fileElement.classList.toggle('selected', file.selected);
-            });
-            
-            appState.selectedFiles = allSelected ? [] : appState.files.map(f => f.id);
-            
-            const btn = document.getElementById('select-all-btn');
-            btn.innerHTML = allSelected ? 
-                '<i class="fas fa-check-square"></i> Select All' : 
-                '<i class="fas fa-square"></i> Deselect All';
-        }
-
-        function processSelectedFiles() {
-            if (appState.selectedFiles.length === 0) {
-                showNotification('Please select files to process', 'warning');
-                return;
-            }
-            
-            showLoading(`Processing ${appState.selectedFiles.length} files...`);
-            
-            let processed = 0;
-            appState.selectedFiles.forEach((fileId, index) => {
-                setTimeout(() => {
-                    const file = appState.files.find(f => f.id == fileId);
-                    if (file) {
-                        file.status = 'processed';
-                        file.processed = true;
-                        updateFileStatus(fileId, 'processed');
-                        
-                        // Simulate metadata extraction
-                        file.metadata = generateSampleMetadata(file);
-                    }
-                    
-                    processed++;
-                    if (processed === appState.selectedFiles.length) {
-                        updateSecurityStatistics();
-                        hideLoading();
-                    }
-                }, index * 500);
-            });
-        }
-
-        function generateSampleMetadata(file) {
-            const metadata = {
-                basic: {
-                    title: file.name.split('.')[0],
-                    description: `Sample description for ${file.name}`,
-                    author: 'John Doe',
-                    keywords: ['sample', 'metadata', file.extension]
-                }
-            };
-
-            if (['jpg', 'jpeg', 'png', 'gif'].includes(file.extension)) {
-                metadata.exif = {
-                    make: 'Canon',
-                    model: 'EOS 5D Mark IV',
-                    latitude: '40.7128',
-                    longitude: '-74.0060'
-                };
-            }
-
-            metadata.xmp = {
-                creator: 'MetaForge App',
-                rights: '© 2025 All Rights Reserved',
-                subject: 'Sample metadata generated by MetaForge'
-            };
-
-            return metadata;
-        }
-
-        function updateFileStatus(fileId, status) {
-            const fileElement = document.querySelector(`[data-file-id="${fileId}"]`);
-            const statusElement = fileElement.querySelector('.status');
-            
-            statusElement.className = 'status';
-            switch(status) {
-                case 'processed':
-                    statusElement.classList.add('status-success');
-                    statusElement.textContent = 'Processed';
-                    break;
-                case 'error':
-                    statusElement.classList.add('status-error');
-                    statusElement.textContent = 'Error';
-                    break;
-                case 'processing':
-                    statusElement.classList.add('status-processing');
-                    statusElement.textContent = 'Processing';
-                    break;
-                default:
-                    statusElement.classList.add('status-warning');
-                    statusElement.textContent = 'Pending';
-            }
-        }
-
-        function editFileMetadata(fileId) {
-            const file = appState.files.find(f => f.id == fileId);
-            if (!file) return;
-
-            appState.currentFile = file;
-            showSection('metadata');
-            
-            // Update nav
-            document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
-            document.querySelector('[data-section="metadata"]').classList.add('active');
-            
-            loadMetadataForm(file);
-        }
-
-        function loadMetadataForm(file) {
-            const metadata = file.metadata || {};
-            
-            // Basic metadata
-            document.getElementById('meta-title').value = metadata.basic?.title || '';
-            document.getElementById('meta-description').value = metadata.basic?.description || '';
-            document.getElementById('meta-author').value = metadata.basic?.author || '';
-            document.getElementById('meta-keywords').value = metadata.basic?.keywords?.join(', ') || '';
-            
-            // EXIF metadata
-            if (metadata.exif) {
-                document.getElementById('exif-make').value = metadata.exif.make || '';
-                document.getElementById('exif-model').value = metadata.exif.model || '';
-                document.getElementById('exif-lat').value = metadata.exif.latitude || '';
-                document.getElementById('exif-lon').value = metadata.exif.longitude || '';
-            }
-            
-            // XMP metadata
-            if (metadata.xmp) {
-                document.getElementById('xmp-creator').value = metadata.xmp.creator || '';
-                document.getElementById('xmp-rights').value = metadata.xmp.rights || '';
-                document.getElementById('xmp-subject').value = metadata.xmp.subject || '';
-            }
-        }
-
-        function saveMetadata() {
-            if (!appState.currentFile) return;
-            
-            showLoading('Saving metadata...');
-            
-            const metadata = {
-                basic: {
-                    title: document.getElementById('meta-title').value,
-                    description: document.getElementById('meta-description').value,
-                    author: document.getElementById('meta-author').value,
-                    keywords: document.getElementById('meta-keywords').value.split(',').map(k => k.trim())
-                },
-                exif: {
-                    make: document.getElementById('exif-make').value,
-                    model: document.getElementById('exif-model').value,
-                    latitude: document.getElementById('exif-lat').value,
-                    longitude: document.getElementById('exif-lon').value
-                },
-                xmp: {
-                    creator: document.getElementById('xmp-creator').value,
-                    rights: document.getElementById('xmp-rights').value,
-                    subject: document.getElementById('xmp-subject').value
-                }
-            };
-            
-            setTimeout(() => {
-                appState.currentFile.metadata = metadata;
-                appState.currentFile.status = 'processed';
-                appState.currentFile.processed = true;
-                
-                updateFileStatus(appState.currentFile.id, 'processed');
-                updateSecurityStatistics();
-                hideLoading();
-                
-                showNotification('Metadata saved successfully!', 'success');
-            }, 1000);
-        }
-
-        function resetMetadata() {
-            if (confirm('Are you sure you want to reset all metadata fields?')) {
-                loadMetadataForm({ metadata: {} });
-            }
-        }
-
-        function addCustomField() {
-            const customFields = document.getElementById('custom-fields');
-            const fieldId = Date.now();
-            
-            const fieldDiv = document.createElement('div');
-            fieldDiv.className = 'form-group';
-            fieldDiv.innerHTML = `
-                <div style="display: flex; gap: 0.5rem; align-items: end;">
-                    <div style="flex: 1;">
-                        <label class="form-label">Field Name</label>
-                        <input type="text" class="form-input" placeholder="Enter field name">
-                    </div>
-                    <div style="flex: 1;">
-                        <label class="form-label">Field Value</label>
-                        <input type="text" class="form-input" placeholder="Enter field value">
-                    </div>
-                    <button class="btn btn-error" onclick="this.parentElement.parentElement.remove()">
-                        <i class="fas fa-trash"></i>
-                    </button>
-                </div>
-            `;
-            
-            customFields.appendChild(fieldDiv);
-        }
-
-        function downloadFile(fileId) {
-            const file = appState.files.find(f => f.id == fileId);
-            if (!file) return;
-            
-            showLoading('Preparing download...');
-            
-            setTimeout(() => {
-                const link = document.createElement('a');
-                link.href = URL.createObjectURL(file.file);
-                link.download = file.name;
-                link.click();
-                
-                hideLoading();
-                showNotification('File downloaded successfully!', 'success');
-            }, 1000);
-        }
-
-        function removeFile(fileId) {
-            if (confirm('Are you sure you want to remove this file?')) {
-                appState.files = appState.files.filter(f => f.id != fileId);
-                appState.selectedFiles = appState.selectedFiles.filter(id => id != fileId);
-                
-                const fileElement = document.querySelector(`[data-file-id="${fileId}"]`);
-                fileElement.remove();
-                
-                updateSecurityStatistics();
-                showNotification('File removed successfully!', 'success');
-            }
-        }
-
-        // Security Functions
-        function encryptDocumentPermissions() {
-            const viewPerm = document.getElementById('view-permission').value;
-            const editPerm = document.getElementById('edit-permission').value;
-            const authorizedUsers = document.getElementById('authorized-users').value;
-            const encryptionKey = document.getElementById('encryption-key').value;
-
-            if (!encryptionKey || encryptionKey.length < 16) {
-                showNotification('Encryption key must be at least 16 characters long', 'error');
-                return;
-            }
-
-            if (appState.selectedFiles.length === 0) {
-                showNotification('Please select files to encrypt permissions for', 'warning');
-                return;
-            }
-
-            showLoading('Encrypting document permissions...');
-
-            setTimeout(() => {
-                appState.selectedFiles.forEach(fileId => {
-                    const file = appState.files.find(f => f.id == fileId);
-                    if (file) {
-                        file.hasEncryptedPermissions = true;
-                    }
-                });
-
-                updateSecurityStatistics();
-                hideLoading();
-                showNotification('Document permissions encrypted successfully!', 'success');
-            }, 1500);
-        }
-
-        function exportPermissionsConfig() {
-            const permissions = {
-                view: document.getElementById('view-permission').value,
-                edit: document.getElementById('edit-permission').value,
-                authorizedUsers: document.getElementById('authorized-users').value,
-                exportDate: new Date().toISOString()
-            };
-
-            const dataStr = JSON.stringify(permissions, null, 2);
-            const dataBlob = new Blob([dataStr], { type: 'application/json' });
-            const url = URL.createObjectURL(dataBlob);
-            
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = 'permissions-config.json';
-            link.click();
-            
-            URL.revokeObjectURL(url);
-            showNotification('Permissions configuration exported!', 'success');
-        }
-
-        function generateEncryptionKey() {
-            const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*';
-            let key = '';
-            for (let i = 0; i < 32; i++) {
-                key += characters.charAt(Math.floor(Math.random() * characters.length));
-            }
-            
-            document.getElementById('encryption-key').value = key;
-            showNotification('Strong encryption key generated!', 'success');
-        }
-
-        function applyMetadataLocks() {
-            const lockBasic = document.getElementById('lock-basic-metadata').checked;
-            const lockExif = document.getElementById('lock-exif-metadata').checked;
-            const lockXmp = document.getElementById('lock-xmp-metadata').checked;
-            const duration = document.getElementById('lock-duration').value;
-            
-            if (!lockBasic && !lockExif && !lockXmp) {
-                showNotification('Please select at least one metadata type to lock', 'warning');
-                return;
-            }
-
-            if (appState.selectedFiles.length === 0) {
-                showNotification('Please select files to apply locks to', 'warning');
-                return;
-            }
-
-            showLoading('Applying metadata locks...');
-
-            setTimeout(() => {
-                appState.selectedFiles.forEach(fileId => {
-                    const file = appState.files.find(f => f.id == fileId);
-                    if (file) {
-                        file.hasMetadataLocks = true;
-                    }
-                });
-
-                updateSecurityStatistics();
-                hideLoading();
-                showNotification('Metadata locks applied successfully!', 'success');
-            }, 1000);
-        }
-
-        function encryptMetadata() {
-            const key = document.getElementById('encryption-key').value;
-
-            if (!key || key.length < 16) {
-                showNotification('Please enter a valid encryption key', 'error');
-                return;
-            }
-
-            if (appState.selectedFiles.length === 0) {
-                showNotification('Please select files to encrypt metadata for', 'warning');
-                return;
-            }
-
-            showLoading('Encrypting metadata...');
-
-            setTimeout(() => {
-                appState.selectedFiles.forEach(fileId => {
-                    const file = appState.files.find(f => f.id == fileId);
-                    if (file) {
-                        file.hasEncryptedMetadata = true;
-                    }
-                });
-
-                updateSecurityStatistics();
-                hideLoading();
-                showNotification('Metadata encrypted successfully!', 'success');
-            }, 1500);
-        }
-
-        function decryptMetadata() {
-            const key = document.getElementById('encryption-key').value;
-
-            if (!key) {
-                showNotification('Please enter the encryption key', 'error');
-                return;
-            }
-
-            if (appState.selectedFiles.length === 0) {
-                showNotification('Please select files to decrypt metadata for', 'warning');
-                return;
-            }
-
-            showLoading('Decrypting metadata...');
-
-            setTimeout(() => {
-                let decrypted = 0;
-                
-                appState.selectedFiles.forEach(fileId => {
-                    const file = appState.files.find(f => f.id == fileId);
-                    if (file && file.hasEncryptedMetadata) {
-                        file.hasEncryptedMetadata = false;
-                        decrypted++;
-                    }
-                });
-
-                updateSecurityStatistics();
-                hideLoading();
-                
-                if (decrypted > 0) {
-                    showNotification(`Successfully decrypted metadata for ${decrypted} files!`, 'success');
-                } else {
-                    showNotification('No encrypted metadata found or invalid key', 'warning');
-                }
-            }, 1000);
-        }
-
-        function generateDocumentHash() {
-            const algorithm = document.getElementById('hash-algorithm').value;
-            const scope = document.getElementById('hash-scope').value;
-            
-            if (appState.selectedFiles.length === 0) {
-                showNotification('Please select files to hash', 'warning');
-                return;
-            }
-
-            const hashResults = document.getElementById('hash-results');
-            hashResults.innerHTML = 'Generating hashes...\n';
-            
-            showLoading('Generating document hashes...');
-
-            setTimeout(() => {
-                let results = '';
-                appState.selectedFiles.forEach(fileId => {
-                    const file = appState.files.find(f => f.id == fileId);
-                    if (file) {
-                        const hash = generateSimulatedHash(file, algorithm, scope);
-                        file.hasDocumentHash = true;
-                        results += `${file.name}: ${hash}\n`;
-                    }
-                });
-
-                hashResults.innerHTML = results;
-                updateSecurityStatistics();
-                hideLoading();
-                showNotification('Document hashes generated successfully!', 'success');
-            }, 2000);
-        }
-
-        function generateSimulatedHash(file, algorithm, scope) {
-            const characters = '0123456789abcdef';
-            const lengths = {
-                'md5': 32,
-                'sha1': 40,
-                'sha256': 64,
-                'sha512': 128,
-                'blake2': 64
-            };
-            
-            const length = lengths[algorithm] || 64;
-            let hash = '';
-            
-            for (let i = 0; i < length; i++) {
-                hash += characters.charAt(Math.floor(Math.random() * characters.length));
-            }
-            
-            return hash;
-        }
-
-        function verifyDocumentIntegrity() {
-            if (appState.selectedFiles.length === 0) {
-                showNotification('Please select files to verify', 'warning');
-                return;
-            }
-
-            showLoading('Verifying document integrity...');
-            
-            setTimeout(() => {
-                const verified = appState.selectedFiles.filter(fileId => {
-                    const file = appState.files.find(f => f.id == fileId);
-                    return file && file.hasDocumentHash;
-                }).length;
-                
-                hideLoading();
-                
-                if (verified > 0) {
-                    showNotification(`All ${verified} files verified successfully!`, 'success');
-                } else {
-                    showNotification('No files with hashes found for verification', 'warning');
-                }
-            }, 1500);
-        }
-
-        function exportHashData() {
-            const hashResults = document.getElementById('hash-results');
-            const hashData = hashResults.textContent;
-            
-            if (!hashData || hashData === 'No hashes generated yet...') {
-                showNotification('No hash data to export', 'warning');
-                return;
-            }
-            
-            const dataBlob = new Blob([hashData], { type: 'text/plain' });
-            const url = URL.createObjectURL(dataBlob);
-            
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = `document-hashes-${new Date().toISOString().split('T')[0]}.txt`;
-            link.click();
-            
-            URL.revokeObjectURL(url);
-            showNotification('Hash data exported successfully!', 'success');
-        }
-
-        function copyHashToClipboard() {
-            const hashResults = document.getElementById('hash-results');
-            const hashData = hashResults.textContent;
-            
-            if (!hashData || hashData === 'No hashes generated yet...') {
-                showNotification('No hash data to copy', 'warning');
-                return;
-            }
-            
-            navigator.clipboard.writeText(hashData).then(() => {
-                showNotification('Hash data copied to clipboard!', 'success');
-            }).catch(() => {
-                showNotification('Failed to copy to clipboard', 'error');
-            });
-        }
-
-        function saveHashToFile() {
-            exportHashData();
-        }
-
-        function updateSecurityStatistics() {
-            const hashedFiles = appState.files.filter(f => f.hasDocumentHash).length;
-            const encryptedFiles = appState.files.filter(f => f.hasEncryptedMetadata).length;
-            const protectedFiles = appState.files.filter(f => f.hasMetadataLocks || f.hasEncryptedPermissions).length;
-            
-            document.getElementById('hashed-files').textContent = hashedFiles;
-            document.getElementById('encrypted-files').textContent = encryptedFiles;
-            document.getElementById('protected-files').textContent = protectedFiles;
-        }
-
-        function showLoading(message) {
-            loadingMessage.textContent = message;
-            loadingModal.classList.add('active');
-        }
-
-        function hideLoading() {
-            loadingModal.classList.remove('active');
-        }
-
-        function showNotification(message, type) {
-            const notification = document.createElement('div');
-            notification.className = `status status-${type}`;
-            notification.style.cssText = `
-                position: fixed;
-                top: 20px;
-                right: 20px;
-                z-index: 1001;
-                padding: 1rem;
-                border-radius: 0.5rem;
-                box-shadow: var(--shadow-lg);
-            `;
-            notification.textContent = message;
-            
-            document.body.appendChild(notification);
-            
-            setTimeout(() => {
-                if (document.body.contains(notification)) {
-                    document.body.removeChild(notification);
-                }
-            }, 3000);
-        }
-    </script>
-</body>
-</html>
-            <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -1342,7 +491,6 @@
             </aside>
 
             <main class="content-area">
-                <!-- File Upload Section -->
                 <section class="upload-section" id="upload-section">
                     <h2 style="margin-bottom: 1.5rem;">File Upload</h2>
                     <div class="upload-zone" id="upload-zone">
@@ -1355,7 +503,6 @@
                     </div>
                 </section>
 
-                <!-- File List -->
                 <section class="file-list" id="file-list-section">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
                         <h2>Uploaded Files</h2>
@@ -1371,11 +518,9 @@
                         </div>
                     </div>
                     <div id="file-list">
-                        <!-- Files will be dynamically added here -->
-                    </div>
+                        </div>
                 </section>
 
-                <!-- Metadata Editor -->
                 <section class="metadata-section" id="metadata-section" style="display: none;">
                     <h2 style="margin-bottom: 1.5rem;">Metadata Editor</h2>
                     
@@ -1447,8 +592,7 @@
 
                     <div class="tab-content" id="custom-tab" style="display: none;">
                         <div class="metadata-form" id="custom-fields">
-                            <!-- Custom fields will be added dynamically -->
-                        </div>
+                            </div>
                         <button class="btn btn-secondary" id="add-custom-field">
                             <i class="fas fa-plus"></i>
                             Add Custom Field
@@ -1467,7 +611,6 @@
                     </div>
                 </section>
 
-                <!-- Document Security Section -->
                 <section class="metadata-section" id="security-section" style="display: none;">
                     <h2 style="margin-bottom: 1.5rem;">
                         <i class="fas fa-shield-alt" style="margin-right: 0.5rem; color: var(--primary);"></i>
@@ -1525,7 +668,6 @@
                     </div>
                 </section>
 
-                <!-- Metadata Protection Section -->
                 <section class="metadata-section" id="encryption-section" style="display: none;">
                     <h2 style="margin-bottom: 1.5rem;">
                         <i class="fas fa-lock" style="margin-right: 0.5rem; color: var(--warning);"></i>
@@ -1583,7 +725,6 @@
                     </div>
                 </section>
 
-                <!-- Document Hashing Section -->
                 <section class="metadata-section" id="hashing-section" style="display: none;">
                     <h2 style="margin-bottom: 1.5rem;">
                         <i class="fas fa-fingerprint" style="margin-right: 0.5rem; color: var(--success);"></i>
@@ -1651,11 +792,801 @@
         </div>
     </div>
 
-    <!-- Loading Modal -->
     <div class="modal" id="loading-modal">
         <div class="modal-content" style="text-align: center;">
             <div class="loading-spinner"></div>
             <h3 style="margin: 1rem 0;">Processing...</h3>
             <p id="loading-message">Please wait while we process your request.</p>
         </div>
-    
+    </div>
+
+    <script>
+        // Application State
+        const appState = {
+            files: [],
+            selectedFiles: [],
+            currentFile: null
+        };
+
+        // Supported file types and their icons
+        const fileTypes = {
+            pdf: { icon: 'fas fa-file-pdf', color: '#dc2626' },
+            jpg: { icon: 'fas fa-file-image', color: '#059669' },
+            jpeg: { icon: 'fas fa-file-image', color: '#059669' },
+            png: { icon: 'fas fa-file-image', color: '#059669' },
+            gif: { icon: 'fas fa-file-image', color: '#059669' },
+            mp3: { icon: 'fas fa-file-audio', color: '#7c3aed' },
+            mp4: { icon: 'fas fa-file-video', color: '#0ea5e9' },
+            avi: { icon: 'fas fa-file-video', color: '#0ea5e9' },
+            docx: { icon: 'fas fa-file-word', color: '#2563eb' },
+            xlsx: { icon: 'fas fa-file-excel', color: '#16a34a' },
+            pptx: { icon: 'fas fa-file-powerpoint', color: '#ea580c' },
+            default: { icon: 'fas fa-file', color: '#6b7280' }
+        };
+
+        // DOM Elements
+        const uploadZone = document.getElementById('upload-zone');
+        const fileInput = document.getElementById('file-input');
+        const fileList = document.getElementById('file-list');
+        const loadingModal = document.getElementById('loading-modal');
+        const loadingMessage = document.getElementById('loading-message');
+
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeApp();
+        });
+
+        function initializeApp() {
+            setupEventListeners();
+            setupNavigation();
+            setupTabs();
+            updateSecurityStatistics();
+        }
+
+        function setupEventListeners() {
+            // File upload
+            uploadZone.addEventListener('click', () => fileInput.click());
+            fileInput.addEventListener('change', handleFileSelect);
+            
+            // Drag and drop
+            uploadZone.addEventListener('dragover', handleDragOver);
+            uploadZone.addEventListener('drop', handleFileDrop);
+            uploadZone.addEventListener('dragenter', (e) => {
+                e.preventDefault();
+                uploadZone.classList.add('dragover');
+            });
+            uploadZone.addEventListener('dragleave', (e) => {
+                e.preventDefault();
+                uploadZone.classList.remove('dragover');
+            });
+
+            // File operations
+            document.getElementById('select-all-btn').addEventListener('click', selectAllFiles);
+            document.getElementById('process-selected-btn').addEventListener('click', processSelectedFiles);
+
+            // Metadata editor
+            document.getElementById('add-custom-field').addEventListener('click', addCustomField);
+            document.getElementById('save-metadata').addEventListener('click', saveMetadata);
+            document.getElementById('reset-metadata').addEventListener('click', resetMetadata);
+
+            // Security features
+            setupSecurityEventListeners();
+        }
+
+        function setupSecurityEventListeners() {
+            // Document Security
+            const encryptPermissionsBtn = document.getElementById('encrypt-permissions');
+            const exportPermissionsBtn = document.getElementById('export-permissions');
+            const generateKeyBtn = document.getElementById('generate-key');
+
+            if (encryptPermissionsBtn) encryptPermissionsBtn.addEventListener('click', encryptDocumentPermissions);
+            if (exportPermissionsBtn) exportPermissionsBtn.addEventListener('click', exportPermissionsConfig);
+            if (generateKeyBtn) generateKeyBtn.addEventListener('click', generateEncryptionKey);
+
+            // Metadata Protection
+            const applyMetadataLocksBtn = document.getElementById('apply-metadata-locks');
+            const encryptMetadataBtn = document.getElementById('encrypt-metadata');
+            const decryptMetadataBtn = document.getElementById('decrypt-metadata');
+
+            if (applyMetadataLocksBtn) applyMetadataLocksBtn.addEventListener('click', applyMetadataLocks);
+            if (encryptMetadataBtn) encryptMetadataBtn.addEventListener('click', encryptMetadata);
+            if (decryptMetadataBtn) decryptMetadataBtn.addEventListener('click', decryptMetadata);
+
+            // Document Hashing
+            const generateHashBtn = document.getElementById('generate-hash');
+            const verifyIntegrityBtn = document.getElementById('verify-integrity');
+            const exportHashBtn = document.getElementById('export-hash');
+            const copyHashBtn = document.getElementById('copy-hash');
+            const saveHashFileBtn = document.getElementById('save-hash-file');
+
+            if (generateHashBtn) generateHashBtn.addEventListener('click', generateDocumentHash);
+            if (verifyIntegrityBtn) verifyIntegrityBtn.addEventListener('click', verifyDocumentIntegrity);
+            if (exportHashBtn) exportHashBtn.addEventListener('click', exportHashData);
+            if (copyHashBtn) copyHashBtn.addEventListener('click', copyHashToClipboard);
+            if (saveHashFileBtn) saveHashFileBtn.addEventListener('click', saveHashToFile);
+        }
+
+        function setupNavigation() {
+            const navItems = document.querySelectorAll('.nav-item');
+            navItems.forEach(item => {
+                item.addEventListener('click', () => {
+                    const section = item.dataset.section;
+                    showSection(section);
+                    
+                    // Update active nav item
+                    navItems.forEach(nav => nav.classList.remove('active'));
+                    item.classList.add('active');
+                });
+            });
+        }
+
+        function setupTabs() {
+            const tabs = document.querySelectorAll('.tab');
+            const tabContents = document.querySelectorAll('.tab-content');
+
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    const tabId = tab.dataset.tab;
+                    
+                    // Update active tab
+                    tabs.forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+                    
+                    // Show corresponding content
+                    tabContents.forEach(content => {
+                        content.style.display = 'none';
+                    });
+                    document.getElementById(tabId + '-tab').style.display = 'block';
+                });
+            });
+        }
+
+        function showSection(sectionName) {
+            const sections = document.querySelectorAll('.upload-section, .metadata-section');
+            sections.forEach(section => {
+                section.style.display = 'none';
+            });
+
+            const fileListSection = document.getElementById('file-list-section');
+            
+            switch(sectionName) {
+                case 'upload':
+                    document.getElementById('upload-section').style.display = 'block';
+                    fileListSection.style.display = 'block';
+                    break;
+                case 'metadata':
+                    document.getElementById('metadata-section').style.display = 'block';
+                    fileListSection.style.display = 'block';
+                    break;
+                case 'security':
+                    document.getElementById('security-section').style.display = 'block';
+                    fileListSection.style.display = 'block';
+                    break;
+                case 'encryption':
+                    document.getElementById('encryption-section').style.display = 'block';
+                    fileListSection.style.display = 'block';
+                    break;
+                case 'hashing':
+                    document.getElementById('hashing-section').style.display = 'block';
+                    fileListSection.style.display = 'block';
+                    break;
+            }
+        }
+
+        function handleDragOver(e) {
+            e.preventDefault();
+        }
+
+        function handleFileDrop(e) {
+            e.preventDefault();
+            uploadZone.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            processFiles(files);
+        }
+
+        function handleFileSelect(e) {
+            const files = e.target.files;
+            processFiles(files);
+        }
+
+        async function processFiles(files) {
+            showLoading('Processing uploaded files...');
+
+            const uploadPromises = Array.from(files).map(file => {
+                const formData = new FormData();
+                formData.append('file', file);
+                return fetch('http://localhost:3000/api/upload', {
+                    method: 'POST',
+                    body: formData
+                }).then(response => {
+                    if (!response.ok) throw new Error('File upload failed');
+                    return response.json();
+                });
+            });
+
+            try {
+                const results = await Promise.all(uploadPromises);
+                results.forEach(fileObj => {
+                    const fileType = fileTypes[fileObj.name.split('.').pop().toLowerCase()] || fileTypes.default;
+                    fileObj.icon = fileType.icon;
+                    fileObj.iconColor = fileType.color;
+
+                    appState.files.push(fileObj);
+                    addFileToList(fileObj);
+                });
+                updateSecurityStatistics();
+                showNotification(`Successfully processed ${results.length} files!`, 'success');
+            } catch (error) {
+                showNotification('File upload failed.', 'error');
+                console.error('Error processing files:', error);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        function addFileToList(fileObj) {
+            const fileItem = document.createElement('div');
+            fileItem.className = 'file-item';
+            fileItem.dataset.fileId = fileObj.id;
+            
+            fileItem.innerHTML = `
+                <i class="${fileObj.icon} file-icon" style="color: ${fileObj.iconColor}"></i>
+                <div class="file-info">
+                    <div class="file-name">${fileObj.name}</div>
+                    <div class="file-details">
+                        ${formatFileSize(fileObj.size)} • ${fileObj.extension ? fileObj.extension.toUpperCase() : 'UNKNOWN'}
+                        <span class="status status-success">Processed</span>
+                    </div>
+                </div>
+                <div class="file-actions">
+                    <button class="btn btn-secondary" onclick="editFileMetadata('${fileObj.id}')">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="btn btn-primary" onclick="downloadFile('${fileObj.id}')">
+                        <i class="fas fa-download"></i>
+                    </button>
+                    <button class="btn btn-error" onclick="removeFile('${fileObj.id}')">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            `;
+
+            fileItem.addEventListener('click', (e) => {
+                if (!e.target.closest('.file-actions')) {
+                    toggleFileSelection(fileObj.id);
+                }
+            });
+
+            fileList.appendChild(fileItem);
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        function toggleFileSelection(fileId) {
+            const file = appState.files.find(f => f.id == fileId);
+            const fileElement = document.querySelector(`[data-file-id="${fileId}"]`);
+            
+            if (file) {
+                file.selected = !file.selected;
+                fileElement.classList.toggle('selected', file.selected);
+                
+                if (file.selected && !appState.selectedFiles.includes(fileId)) {
+                    appState.selectedFiles.push(fileId);
+                } else if (!file.selected) {
+                    appState.selectedFiles = appState.selectedFiles.filter(id => id != fileId);
+                }
+            }
+        }
+
+        function selectAllFiles() {
+            const allSelected = appState.selectedFiles.length === appState.files.length;
+            
+            appState.files.forEach(file => {
+                file.selected = !allSelected;
+                const fileElement = document.querySelector(`[data-file-id="${file.id}"]`);
+                if (fileElement) {
+                    fileElement.classList.toggle('selected', file.selected);
+                }
+            });
+            
+            appState.selectedFiles = allSelected ? [] : appState.files.map(f => f.id);
+            
+            const btn = document.getElementById('select-all-btn');
+            btn.innerHTML = allSelected ? 
+                '<i class="fas fa-check-square"></i> Select All' : 
+                '<i class="fas fa-square"></i> Deselect All';
+        }
+
+        function processSelectedFiles() {
+            showNotification('Processing is handled automatically on upload.', 'info');
+        }
+
+        function editFileMetadata(fileId) {
+            const file = appState.files.find(f => f.id == fileId);
+            if (!file) {
+                showNotification('File not found.', 'error');
+                return;
+            }
+
+            appState.currentFile = file;
+            showSection('metadata');
+            
+            // Update nav
+            document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
+            document.querySelector('[data-section="metadata"]').classList.add('active');
+            
+            loadMetadataForm(file);
+        }
+
+        function loadMetadataForm(file) {
+            const metadata = file.metadata || {};
+            
+            // Basic metadata
+            document.getElementById('meta-title').value = metadata.basic?.title || '';
+            document.getElementById('meta-description').value = metadata.basic?.description || '';
+            document.getElementById('meta-author').value = metadata.basic?.author || '';
+            document.getElementById('meta-keywords').value = metadata.basic?.keywords?.join(', ') || '';
+            
+            // EXIF metadata
+            if (metadata.exif) {
+                document.getElementById('exif-make').value = metadata.exif.make || '';
+                document.getElementById('exif-model').value = metadata.exif.model || '';
+                document.getElementById('exif-lat').value = metadata.exif.latitude || '';
+                document.getElementById('exif-lon').value = metadata.exif.longitude || '';
+            }
+            
+            // XMP metadata
+            if (metadata.xmp) {
+                document.getElementById('xmp-creator').value = metadata.xmp.creator || '';
+                document.getElementById('xmp-rights').value = metadata.xmp.rights || '';
+                document.getElementById('xmp-subject').value = metadata.xmp.subject || '';
+            }
+        }
+
+        async function saveMetadata() {
+            if (!appState.currentFile) return;
+            
+            showLoading('Saving metadata...');
+            
+            const metadata = {
+                basic: {
+                    title: document.getElementById('meta-title').value,
+                    description: document.getElementById('meta-description').value,
+                    author: document.getElementById('meta-author').value,
+                    keywords: document.getElementById('meta-keywords').value.split(',').map(k => k.trim())
+                },
+                exif: {
+                    make: document.getElementById('exif-make').value,
+                    model: document.getElementById('exif-model').value,
+                    latitude: document.getElementById('exif-lat').value,
+                    longitude: document.getElementById('exif-lon').value
+                },
+                xmp: {
+                    creator: document.getElementById('xmp-creator').value,
+                    rights: document.getElementById('xmp-rights').value,
+                    subject: document.getElementById('xmp-subject').value
+                }
+            };
+            
+            try {
+                const response = await fetch(`http://localhost:3000/api/metadata/${appState.currentFile.id}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ metadata })
+                });
+                const updatedFile = await response.json();
+                
+                // Update local state with the new metadata
+                Object.assign(appState.currentFile, updatedFile);
+
+                updateFileStatus(appState.currentFile.id, 'processed');
+                updateSecurityStatistics();
+                showNotification('Metadata saved successfully!', 'success');
+            } catch (error) {
+                showNotification('Failed to save metadata.', 'error');
+                console.error('Error saving metadata:', error);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        function resetMetadata() {
+            if (confirm('Are you sure you want to reset all metadata fields?')) {
+                loadMetadataForm({ metadata: {} });
+            }
+        }
+
+        function addCustomField() {
+            const customFields = document.getElementById('custom-fields');
+            const fieldId = Date.now();
+            
+            const fieldDiv = document.createElement('div');
+            fieldDiv.className = 'form-group';
+            fieldDiv.innerHTML = `
+                <div style="display: flex; gap: 0.5rem; align-items: end;">
+                    <div style="flex: 1;">
+                        <label class="form-label">Field Name</label>
+                        <input type="text" class="form-input" placeholder="Enter field name">
+                    </div>
+                    <div style="flex: 1;">
+                        <label class="form-label">Field Value</label>
+                        <input type="text" class="form-input" placeholder="Enter field value">
+                    </div>
+                    <button class="btn btn-error" onclick="this.parentElement.parentElement.remove()">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            `;
+            
+            customFields.appendChild(fieldDiv);
+        }
+
+        function downloadFile(fileId) {
+            showNotification('Download functionality requires a server-side route not included in this example.', 'warning');
+        }
+
+        function removeFile(fileId) {
+            if (confirm('Are you sure you want to remove this file?')) {
+                appState.files = appState.files.filter(f => f.id != fileId);
+                appState.selectedFiles = appState.selectedFiles.filter(id => id != fileId);
+                
+                const fileElement = document.querySelector(`[data-file-id="${fileId}"]`);
+                if (fileElement) {
+                    fileElement.remove();
+                }
+                
+                updateSecurityStatistics();
+                showNotification('File removed successfully!', 'success');
+            }
+        }
+
+        // Security Functions
+        async function encryptDocumentPermissions() {
+            if (appState.selectedFiles.length === 0) {
+                showNotification('Please select files to encrypt permissions for', 'warning');
+                return;
+            }
+
+            showLoading('Encrypting document permissions...');
+
+            const encryptionKey = document.getElementById('encryption-key').value;
+            const permissions = {
+                view: document.getElementById('view-permission').value,
+                edit: document.getElementById('edit-permission').value,
+                authorizedUsers: document.getElementById('authorized-users').value
+            };
+
+            const promises = appState.selectedFiles.map(fileId => {
+                return fetch(`http://localhost:3000/api/security/${fileId}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'encryptPermissions', key: encryptionKey, permissions })
+                }).then(response => response.json());
+            });
+
+            try {
+                await Promise.all(promises);
+                appState.selectedFiles.forEach(fileId => {
+                    const file = appState.files.find(f => f.id == fileId);
+                    if (file) file.hasEncryptedPermissions = true;
+                });
+                updateSecurityStatistics();
+                showNotification('Document permissions encrypted successfully!', 'success');
+            } catch (error) {
+                showNotification('Failed to encrypt permissions.', 'error');
+                console.error('Error encrypting permissions:', error);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        function exportPermissionsConfig() {
+            const permissions = {
+                view: document.getElementById('view-permission').value,
+                edit: document.getElementById('edit-permission').value,
+                authorizedUsers: document.getElementById('authorized-users').value,
+                exportDate: new Date().toISOString()
+            };
+
+            const dataStr = JSON.stringify(permissions, null, 2);
+            const dataBlob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(dataBlob);
+            
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'permissions-config.json';
+            link.click();
+            
+            URL.revokeObjectURL(url);
+            showNotification('Permissions configuration exported!', 'success');
+        }
+
+        function generateEncryptionKey() {
+            const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*';
+            let key = '';
+            for (let i = 0; i < 32; i++) {
+                key += characters.charAt(Math.floor(Math.random() * characters.length));
+            }
+            
+            document.getElementById('encryption-key').value = key;
+            showNotification('Strong encryption key generated!', 'success');
+        }
+
+        async function applyMetadataLocks() {
+            const lockBasic = document.getElementById('lock-basic-metadata').checked;
+            const lockExif = document.getElementById('lock-exif-metadata').checked;
+            const lockXmp = document.getElementById('lock-xmp-metadata').checked;
+            const duration = document.getElementById('lock-duration').value;
+            
+            if (!lockBasic && !lockExif && !lockXmp) {
+                showNotification('Please select at least one metadata type to lock', 'warning');
+                return;
+            }
+
+            if (appState.selectedFiles.length === 0) {
+                showNotification('Please select files to apply locks to', 'warning');
+                return;
+            }
+
+            showLoading('Applying metadata locks...');
+
+            const promises = appState.selectedFiles.map(fileId => {
+                return fetch(`http://localhost:3000/api/security/${fileId}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'applyMetadataLocks', locks: { basic: lockBasic, exif: lockExif, xmp: lockXmp, duration } })
+                }).then(response => response.json());
+            });
+
+            try {
+                await Promise.all(promises);
+                appState.selectedFiles.forEach(fileId => {
+                    const file = appState.files.find(f => f.id == fileId);
+                    if (file) file.hasMetadataLocks = true;
+                });
+                updateSecurityStatistics();
+                showNotification('Metadata locks applied successfully!', 'success');
+            } catch (error) {
+                showNotification('Failed to apply metadata locks.', 'error');
+                console.error('Error applying metadata locks:', error);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        async function encryptMetadata() {
+            const key = document.getElementById('encryption-key').value;
+
+            if (!key) {
+                showNotification('Please enter a valid encryption key', 'error');
+                return;
+            }
+
+            if (appState.selectedFiles.length === 0) {
+                showNotification('Please select files to encrypt metadata for', 'warning');
+                return;
+            }
+
+            showLoading('Encrypting metadata...');
+
+            const promises = appState.selectedFiles.map(fileId => {
+                return fetch(`http://localhost:3000/api/security/${fileId}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'encryptMetadata', key })
+                }).then(response => response.json());
+            });
+
+            try {
+                await Promise.all(promises);
+                appState.selectedFiles.forEach(fileId => {
+                    const file = appState.files.find(f => f.id == fileId);
+                    if (file) file.hasEncryptedMetadata = true;
+                });
+                updateSecurityStatistics();
+                showNotification('Metadata encrypted successfully!', 'success');
+            } catch (error) {
+                showNotification('Failed to encrypt metadata.', 'error');
+                console.error('Error encrypting metadata:', error);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        async function decryptMetadata() {
+            const key = document.getElementById('encryption-key').value;
+
+            if (!key) {
+                showNotification('Please enter the encryption key', 'error');
+                return;
+            }
+
+            if (appState.selectedFiles.length === 0) {
+                showNotification('Please select files to decrypt metadata for', 'warning');
+                return;
+            }
+
+            showLoading('Decrypting metadata...');
+
+            const promises = appState.selectedFiles.map(fileId => {
+                return fetch(`http://localhost:3000/api/security/${fileId}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'decryptMetadata', key })
+                }).then(response => response.json());
+            });
+
+            try {
+                const results = await Promise.all(promises);
+                let decryptedCount = 0;
+                appState.selectedFiles.forEach(fileId => {
+                    const file = appState.files.find(f => f.id == fileId);
+                    if (file) {
+                        file.hasEncryptedMetadata = false;
+                        decryptedCount++;
+                    }
+                });
+                updateSecurityStatistics();
+                showNotification(`Successfully decrypted metadata for ${decryptedCount} files!`, 'success');
+            } catch (error) {
+                showNotification('Failed to decrypt metadata or invalid key.', 'error');
+                console.error('Error decrypting metadata:', error);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        async function generateDocumentHash() {
+            const algorithm = document.getElementById('hash-algorithm').value;
+            const scope = document.getElementById('hash-scope').value;
+            
+            if (appState.selectedFiles.length === 0) {
+                showNotification('Please select files to hash', 'warning');
+                return;
+            }
+
+            const hashResultsElement = document.getElementById('hash-results');
+            hashResultsElement.innerHTML = 'Generating hashes...\n';
+            showLoading('Generating document hashes...');
+
+            let results = '';
+            const hashPromises = appState.selectedFiles.map(async fileId => {
+                try {
+                    const response = await fetch(`http://localhost:3000/api/hash/${fileId}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ algorithm, scope })
+                    });
+                    const { hash, name } = await response.json();
+                    results += `${name}: ${hash}\n`;
+                    
+                    const file = appState.files.find(f => f.id == fileId);
+                    if(file) file.hasDocumentHash = true;
+                } catch (error) {
+                    results += `Error hashing file ${fileId}\n`;
+                    console.error('Error generating hash:', error);
+                }
+            });
+
+            await Promise.all(hashPromises);
+            hashResultsElement.innerHTML = results;
+            updateSecurityStatistics();
+            hideLoading();
+            showNotification('Document hashes generated successfully!', 'success');
+        }
+
+        function verifyDocumentIntegrity() {
+            if (appState.selectedFiles.length === 0) {
+                showNotification('Please select files to verify', 'warning');
+                return;
+            }
+
+            showLoading('Verifying document integrity...');
+            
+            setTimeout(() => {
+                const verified = appState.selectedFiles.filter(fileId => {
+                    const file = appState.files.find(f => f.id == fileId);
+                    return file && file.hasDocumentHash;
+                }).length;
+                
+                hideLoading();
+                
+                if (verified > 0) {
+                    showNotification(`All ${verified} files verified successfully!`, 'success');
+                } else {
+                    showNotification('No files with hashes found for verification', 'warning');
+                }
+            }, 1500);
+        }
+
+        function exportHashData() {
+            const hashResults = document.getElementById('hash-results');
+            const hashData = hashResults.textContent;
+            
+            if (!hashData || hashData === 'No hashes generated yet...' || hashData === 'Generating hashes...\n') {
+                showNotification('No hash data to export', 'warning');
+                return;
+            }
+            
+            const dataBlob = new Blob([hashData], { type: 'text/plain' });
+            const url = URL.createObjectURL(dataBlob);
+            
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `document-hashes-${new Date().toISOString().split('T')[0]}.txt`;
+            link.click();
+            
+            URL.revokeObjectURL(url);
+            showNotification('Hash data exported successfully!', 'success');
+        }
+
+        function copyHashToClipboard() {
+            const hashResults = document.getElementById('hash-results');
+            const hashData = hashResults.textContent;
+            
+            if (!hashData || hashData === 'No hashes generated yet...' || hashData === 'Generating hashes...\n') {
+                showNotification('No hash data to copy', 'warning');
+                return;
+            }
+            
+            navigator.clipboard.writeText(hashData).then(() => {
+                showNotification('Hash data copied to clipboard!', 'success');
+            }).catch(() => {
+                showNotification('Failed to copy to clipboard', 'error');
+            });
+        }
+
+        function saveHashToFile() {
+            exportHashData();
+        }
+
+        function updateSecurityStatistics() {
+            const hashedFiles = appState.files.filter(f => f.hasDocumentHash).length;
+            const encryptedFiles = appState.files.filter(f => f.hasEncryptedMetadata).length;
+            const protectedFiles = appState.files.filter(f => f.hasMetadataLocks || f.hasEncryptedPermissions).length;
+            
+            document.getElementById('hashed-files').textContent = hashedFiles;
+            document.getElementById('encrypted-files').textContent = encryptedFiles;
+            document.getElementById('protected-files').textContent = protectedFiles;
+        }
+
+        function showLoading(message) {
+            loadingMessage.textContent = message;
+            loadingModal.classList.add('active');
+        }
+
+        function hideLoading() {
+            loadingModal.classList.remove('active');
+        }
+
+        function showNotification(message, type) {
+            const notification = document.createElement('div');
+            notification.className = `status status-${type}`;
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                z-index: 1001;
+                padding: 1rem;
+                border-radius: 0.5rem;
+                box-shadow: var(--shadow-lg);
+            `;
+            notification.textContent = message;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                if (document.body.contains(notification)) {
+                    document.body.removeChild(notification);
+                }
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
