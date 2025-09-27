@@ -626,12 +626,12 @@
 
                 <section class="metadata-section" id="security-section" style="display: none;">
                     <h2 style="margin-bottom: 1.5rem;">
-                        <i class="fas fa-shield-alt" style="margin-right: 0.5rem; color: var(--primary-text);"></i>
+                        <i class="fas fa-shield-alt" style="margin-right: 0.5rem; color: var(--primary);"></i>
                         Document Security
                     </h2>
                     
-                    <div style="background: #f8fafc; padding: 1.5rem; border-radius: 5px; margin-bottom: 1.5rem; border-left: 4px solid var(--primary-accent);">
-                        <h3 style="margin-bottom: 1rem; color: var(--primary-text);">Document Permissions</h3>
+                    <div style="background: var(--bg); padding: 1.5rem; border-radius: 0.5rem; margin-bottom: 1.5rem; border-left: 4px solid var(--primary);">
+                        <h3 style="margin-bottom: 1rem; color: var(--primary);">Document Permissions</h3>
                         
                         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
                             <div class="form-group">
@@ -683,29 +683,29 @@
 
                 <section class="metadata-section" id="encryption-section" style="display: none;">
                     <h2 style="margin-bottom: 1.5rem;">
-                        <i class="fas fa-lock" style="margin-right: 0.5rem; color: var(--primary-text);"></i>
+                        <i class="fas fa-lock" style="margin-right: 0.5rem; color: var(--warning);"></i>
                         Metadata Protection
                     </h2>
                     
-                    <div style="background: #f8fafc; padding: 1.5rem; border-radius: 5px; margin-bottom: 1.5rem; border-left: 4px solid var(--primary-accent);">
-                        <h3 style="margin-bottom: 1rem; color: var(--primary-text);">Metadata Locking</h3>
+                    <div style="background: var(--bg); padding: 1.5rem; border-radius: 0.5rem; margin-bottom: 1.5rem; border-left: 4px solid var(--warning);">
+                        <h3 style="margin-bottom: 1rem; color: var(--warning);">Metadata Locking</h3>
                         
                         <div style="display: grid; gap: 1rem; margin-bottom: 1.5rem;">
-                            <label style="display: flex; align-items: center; gap: 0.5rem; padding: 0.75rem; background: var(--input-bg); border-radius: 5px; cursor: pointer;">
+                            <label style="display: flex; align-items: center; gap: 0.5rem; padding: 0.75rem; background: var(--surface); border-radius: 0.5rem; cursor: pointer;">
                                 <input type="checkbox" id="lock-basic-metadata">
-                                <i class="fas fa-info-circle" style="color: var(--primary-text);"></i>
+                                <i class="fas fa-info-circle" style="color: var(--primary);"></i>
                                 <span>Lock Basic Metadata (Title, Description, Author, Keywords)</span>
                             </label>
                             
-                            <label style="display: flex; align-items: center; gap: 0.5rem; padding: 0.75rem; background: var(--input-bg); border-radius: 5px; cursor: pointer;">
+                            <label style="display: flex; align-items: center; gap: 0.5rem; padding: 0.75rem; background: var(--surface); border-radius: 0.5rem; cursor: pointer;">
                                 <input type="checkbox" id="lock-exif-metadata">
-                                <i class="fas fa-camera" style="color: var(--primary-text);"></i>
+                                <i class="fas fa-camera" style="color: var(--success);"></i>
                                 <span>Lock EXIF Metadata (Camera data, GPS coordinates)</span>
                             </label>
                             
-                            <label style="display: flex; align-items: center; gap: 0.5rem; padding: 0.75rem; background: var(--input-bg); border-radius: 5px; cursor: pointer;">
+                            <label style="display: flex; align-items: center; gap: 0.5rem; padding: 0.75rem; background: var(--surface); border-radius: 0.5rem; cursor: pointer;">
                                 <input type="checkbox" id="lock-xmp-metadata">
-                                <i class="fas fa-copyright" style="color: var(--primary-text);"></i>
+                                <i class="fas fa-copyright" style="color: var(--error);"></i>
                                 <span>Lock XMP Metadata (Rights, Creator, Subject)</span>
                             </label>
                         </div>
@@ -722,11 +722,11 @@
                         </div>
                         
                         <div style="display: flex; gap: 1rem;">
-                            <button class="btn btn-primary" id="apply-metadata-locks">
+                            <button class="btn btn-warning" id="apply-metadata-locks">
                                 <i class="fas fa-lock"></i>
                                 Apply Locks
                             </button>
-                            <button class="btn btn-primary" id="encrypt-metadata">
+                            <button class="btn btn-success" id="encrypt-metadata">
                                 <i class="fas fa-shield-alt"></i>
                                 Encrypt Metadata
                             </button>
@@ -740,12 +740,12 @@
 
                 <section class="metadata-section" id="hashing-section" style="display: none;">
                     <h2 style="margin-bottom: 1.5rem;">
-                        <i class="fas fa-fingerprint" style="margin-right: 0.5rem; color: var(--primary-text);"></i>
+                        <i class="fas fa-fingerprint" style="margin-right: 0.5rem; color: var(--success);"></i>
                         Document Hashing & Integrity
                     </h2>
                     
-                    <div style="background: #f8fafc; padding: 1.5rem; border-radius: 5px; margin-bottom: 1.5rem; border-left: 4px solid var(--primary-accent);">
-                        <h3 style="margin-bottom: 1rem; color: var(--primary-text);">Hash Generation</h3>
+                    <div style="background: var(--bg); padding: 1.5rem; border-radius: 0.5rem; margin-bottom: 1.5rem; border-left: 4px solid var(--success);">
+                        <h3 style="margin-bottom: 1rem; color: var(--success);">Hash Generation</h3>
                         
                         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
                             <div class="form-group">
@@ -771,7 +771,7 @@
                         </div>
                         
                         <div style="display: flex; gap: 1rem; margin-bottom: 1rem;">
-                            <button class="btn btn-primary" id="generate-hash">
+                            <button class="btn btn-success" id="generate-hash">
                                 <i class="fas fa-play"></i>
                                 Generate Hash
                             </button>
@@ -785,7 +785,7 @@
                             </button>
                         </div>
                         
-                        <div id="hash-results" class="output-textarea" style="font-family: monospace; background: var(--input-bg); padding: 1rem; border-radius: 5px; min-height: 100px; margin-bottom: 1rem; border: 1px solid var(--input-border);">
+                        <div id="hash-results" style="font-family: monospace; background: var(--surface); padding: 1rem; border-radius: 0.5rem; min-height: 100px; margin-bottom: 1rem; border: 1px solid var(--border);">
                             No hashes generated yet...
                         </div>
                         
@@ -1008,7 +1008,7 @@
             const uploadPromises = Array.from(files).map(file => {
                 const formData = new FormData();
                 formData.append('file', file);
-                return fetch('http://localhost:3000/api/upload', {
+                return fetch('https://universalmeta.onrender.com/api/upload', {
                     method: 'POST',
                     body: formData
                 }).then(response => {
@@ -1188,7 +1188,7 @@
             };
             
             try {
-                const response = await fetch(`http://localhost:3000/api/metadata/${appState.currentFile.id}`, {
+                const response = await fetch(`https://universalmeta.onrender.com/api/metadata/${appState.currentFile.id}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ metadata })
@@ -1276,7 +1276,7 @@
             };
 
             const promises = appState.selectedFiles.map(fileId => {
-                return fetch(`http://localhost:3000/api/security/${fileId}`, {
+                return fetch(`https://universalmeta.onrender.com/api/security/${fileId}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ action: 'encryptPermissions', key: encryptionKey, permissions })
@@ -1350,7 +1350,7 @@
             showLoading('Applying metadata locks...');
 
             const promises = appState.selectedFiles.map(fileId => {
-                return fetch(`http://localhost:3000/api/security/${fileId}`, {
+                return fetch(`https://universalmeta.onrender.com/api/security/${fileId}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ action: 'applyMetadataLocks', locks: { basic: lockBasic, exif: lockExif, xmp: lockXmp, duration } })
@@ -1389,7 +1389,7 @@
             showLoading('Encrypting metadata...');
 
             const promises = appState.selectedFiles.map(fileId => {
-                return fetch(`http://localhost:3000/api/security/${fileId}`, {
+                return fetch(`https://universalmeta.onrender.com/api/security/${fileId}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ action: 'encryptMetadata', key })
@@ -1428,7 +1428,7 @@
             showLoading('Decrypting metadata...');
 
             const promises = appState.selectedFiles.map(fileId => {
-                return fetch(`http://localhost:3000/api/security/${fileId}`, {
+                return fetch(`https://universalmeta.onrender.com/api/security/${fileId}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ action: 'decryptMetadata', key })
@@ -1471,7 +1471,7 @@
             let results = '';
             const hashPromises = appState.selectedFiles.map(async fileId => {
                 try {
-                    const response = await fetch(`http://localhost:3000/api/hash/${fileId}`, {
+                    const response = await fetch(`https://universalmeta.onrender.com/api/hash/${fileId}`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ algorithm, scope })
@@ -1580,7 +1580,7 @@
 
         function showNotification(message, type) {
             const notification = document.createElement('div');
-            notification.className = `status-message status-${type}`;
+            notification.className = `status status-${type}`;
             notification.style.cssText = `
                 position: fixed;
                 top: 20px;
@@ -1588,9 +1588,7 @@
                 z-index: 1001;
                 padding: 1rem;
                 border-radius: 0.5rem;
-                box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1);
-                background: #fef3c7;
-                color: var(--primary-accent);
+                box-shadow: var(--shadow-lg);
             `;
             notification.textContent = message;
             
@@ -1605,3 +1603,4 @@
     </script>
 </body>
 </html>
+}
