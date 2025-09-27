@@ -13,7 +13,8 @@ const PORT = 3000;
 // Middleware
 app.use(cors());
 app.use(express.json());
-app.use(express.static('public')); // Serve the front-end files
+// Serve the front-end files from the 'frontend' directory
+app.use(express.static('frontend'));
 
 // Setup Multer for file uploads
 const upload = multer({ dest: 'uploads/' });
