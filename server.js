@@ -159,12 +159,16 @@ const filesDb = {};
 function extractMetadata(file, author) {
     // Simulated, PDF-centric metadata extraction
     const baseName = (file.originalname || 'document').replace(/\.pdf$/i, '');
+    const defaultAuthor = author || 'Author';
+    
     const metadata = {
         basic: {
             title: baseName,
-            description: `Sample description for ${file.originalname}`,
-            author: author || 'Unknown',
-            keywords: ['sample', 'metadata', 'pdf']
+            description: '',
+            author: defaultAuthor,
+            keywords: [],
+            producer: defaultAuthor,  // Default to author
+            creator: defaultAuthor    // Default to author (Content Creator)
         },
         pdf: {
             pages: null // Placeholder
@@ -236,13 +240,24 @@ function computeFileHash(filePath, algorithm = 'sha256') {
 // Write metadata (including XMP) to PDF using ExifTool
 function writePdfMetadataWithExifTool(inputPath, metadata) {
     return new Promise((resolve, reject) => {
+        // Get values with defaults
+        const author = (metadata && metadata.basic && metadata.basic.author) || 'Author';
+        const producer = (metadata && metadata.basic && metadata.basic.producer) || author;
+        const creator = (metadata && metadata.basic && metadata.basic.creator) || author;
+        
         // Map simple metadata fields to ExifTool args. Extend as needed.
         const args = [
             '-overwrite_original',
             // Basic PDF info
             metadata && metadata.basic && metadata.basic.title ? `-Title=${metadata.basic.title}` : undefined,
-            metadata && metadata.basic && metadata.basic.author ? `-Author=${metadata.basic.author}` : undefined,
-            metadata && metadata.basic && metadata.basic.description ? `-Subject=${metadata.basic.description}` : undefined,
+            `-Author=${author}`,
+            metadata && metadata.basic && metadata.basic.description ? `-Subject=${metadata.basic.description}` : `-Subject=`,
+            `-Producer=${producer}`,
+            `-Creator=${creator}`,
+            // Keywords
+            metadata && metadata.basic && metadata.basic.keywords && metadata.basic.keywords.length > 0 
+                ? `-Keywords=${metadata.basic.keywords.join(', ')}` 
+                : `-Keywords=`,
             // XMP mappings (Dublin Core)
             metadata && metadata.xmp && metadata.xmp.creator ? `-XMP-dc:Creator=${metadata.xmp.creator}` : undefined,
             metadata && metadata.xmp && metadata.xmp.rights ? `-XMP-dc:Rights=${metadata.xmp.rights}` : undefined,
