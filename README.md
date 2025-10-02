@@ -85,37 +85,73 @@ Create a `.env` file based on `.env.example`:
 
 ## Deployment
 
-### Google Cloud Run (Recommended)
+### Render.com (Recommended - WORKS NOW!)
 
-1. Build the Docker image:
+Render is the best option for this application. The included `render.yaml` is already configured.
+
+#### Quick Deploy to Render:
+
+1. **Push your code to GitHub** (if not already done):
 ```bash
-docker build -t universalmeta .
+git init
+git add .
+git commit -m "Initial commit"
+git remote add origin YOUR_GITHUB_REPO_URL
+git push -u origin main
 ```
 
-2. Tag for Google Cloud:
-```bash
-docker tag universalmeta gcr.io/YOUR_PROJECT_ID/universalmeta
-```
+2. **Go to Render Dashboard**: https://dashboard.render.com/
 
-3. Push to Google Container Registry:
-```bash
-docker push gcr.io/YOUR_PROJECT_ID/universalmeta
-```
+3. **Click "New +" → "Blueprint"**
 
-4. Deploy to Cloud Run:
-```bash
-gcloud run deploy universalmeta \
-  --image gcr.io/YOUR_PROJECT_ID/universalmeta \
-  --platform managed \
-  --region us-central1 \
-  --allow-unauthenticated \
-  --set-env-vars="AUTH_ENABLED=true,AUTH_USERNAME=admin,AUTH_PASSWORD=YOUR_SECURE_PASSWORD,CORS_ORIGIN=https://yourdomain.com,NODE_ENV=production"
-```
+4. **Connect your GitHub repository**
 
-5. Set memory and CPU (optional):
-```bash
---memory 1Gi --cpu 1
-```
+5. **Render will automatically detect `render.yaml`** and set up:
+   - Docker environment with all required tools (Ghostscript, qpdf, ExifTool)
+   - Health checks
+   - Auto-deploy on git push
+
+6. **Add Environment Variables** in Render Dashboard:
+   - Go to your service → Environment tab
+   - Add these variables:
+     ```
+     AUTH_ENABLED=true
+     AUTH_USERNAME=admin
+     AUTH_PASSWORD=your-strong-password-here
+     CORS_ORIGIN=https://your-render-url.onrender.com
+     NODE_ENV=production
+     ```
+
+7. **Deploy!** - Render will build and deploy automatically
+
+#### Alternative: Manual Render Deploy
+
+If you prefer manual deployment:
+
+1. Go to Render Dashboard → "New +" → "Web Service"
+2. Connect your repository
+3. Configure:
+   - **Name**: universalmeta
+   - **Environment**: Docker
+   - **Build Command**: (leave empty - uses Dockerfile)
+   - **Start Command**: (leave empty - uses Dockerfile CMD)
+   - **Plan**: Starter ($7/month) or Free
+4. Add environment variables (same as above)
+5. Click "Create Web Service"
+
+### ⚠️ Why Vercel Won't Work
+
+**Vercel is NOT suitable for this application** because:
+- ❌ Serverless environment has read-only filesystem (can't save uploaded files)
+- ❌ No Ghostscript, qpdf, or ExifTool available
+- ❌ Limited execution time (10-60 seconds max)
+- ❌ Can't run Docker containers
+
+**Use Render instead** - it provides:
+- ✅ Full Docker support with all tools
+- ✅ Persistent filesystem during request
+- ✅ No execution time limits for long PDF processing
+- ✅ Simple deployment with render.yaml
 
 ### Docker (Local/Self-Hosted)
 
