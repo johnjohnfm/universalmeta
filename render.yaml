@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: universalmeta-api
+    env: docker
+    plan: starter
+    autoDeploy: true
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /api/files
+

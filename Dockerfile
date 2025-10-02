@@ -6,7 +6,12 @@ WORKDIR /usr/src/app
 
 # Copy package.json and install dependencies
 COPY package*.json ./
-RUN npm install
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ghostscript \
+    qpdf \
+    exiftool \
+ && rm -rf /var/lib/apt/lists/* \
+ && npm install
 
 # Copy the rest of your application source code
 COPY . .
