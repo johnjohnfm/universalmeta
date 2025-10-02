@@ -471,17 +471,9 @@
                     <i class="fas fa-edit nav-icon"></i>
                     Metadata Editor
                 </div>
-                <div class="nav-item" data-section="security">
-                    <i class="fas fa-shield-alt nav-icon"></i>
-                    Document Security
-                </div>
-                <div class="nav-item" data-section="encryption">
-                    <i class="fas fa-lock nav-icon"></i>
-                    Metadata Protection
-                </div>
-                <div class="nav-item" data-section="hashing">
-                    <i class="fas fa-fingerprint nav-icon"></i>
-                    Document Hashing
+                <div class="nav-item" data-section="finalize">
+                    <i class="fas fa-check-circle nav-icon"></i>
+                    Finalize
                 </div>
 
                 <hr style="margin: 1.5rem 0; border: none; height: 1px; background: var(--input-border);">
@@ -508,11 +500,11 @@
                     <h2 style="margin-bottom: 1.5rem;">File Upload</h2>
                     <div class="upload-zone" id="upload-zone">
                         <i class="fas fa-cloud-upload-alt upload-icon"></i>
-                        <div class="upload-text">Drag & drop files here or click to browse</div>
+                        <div class="upload-text">Drag & drop PDF here or click to browse</div>
                         <div class="upload-subtext">
-                            Supports: PDF, JPG, PNG, MP3, MP4, DOCX, and more
+                            PDF only
                         </div>
-                        <input type="file" multiple class="hidden-input" id="file-input" accept=".pdf,.jpg,.jpeg,.png,.gif,.mp3,.mp4,.avi,.docx,.xlsx,.pptx">
+                        <input type="file" multiple class="hidden-input" id="file-input" accept=".pdf">
                     </div>
                 </section>
 
@@ -624,181 +616,18 @@
                     </div>
                 </section>
 
-                <section class="metadata-section" id="security-section" style="display: none;">
+                <section class="metadata-section" id="finalize-section" style="display: none;">
                     <h2 style="margin-bottom: 1.5rem;">
-                        <i class="fas fa-shield-alt" style="margin-right: 0.5rem; color: var(--primary);"></i>
-                        Document Security
+                        <i class="fas fa-check-circle" style="margin-right: 0.5rem; color: var(--success);"></i>
+                        Finalize Document
                     </h2>
-                    
-                    <div style="background: var(--bg); padding: 1.5rem; border-radius: 0.5rem; margin-bottom: 1.5rem; border-left: 4px solid var(--primary);">
-                        <h3 style="margin-bottom: 1rem; color: var(--primary);">Document Permissions</h3>
-                        
-                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
-                            <div class="form-group">
-                                <label class="form-label">View Permission</label>
-                                <select class="form-input" id="view-permission">
-                                    <option value="public">Public</option>
-                                    <option value="restricted">Restricted</option>
-                                    <option value="private">Private</option>
-                                    <option value="encrypted">Encrypted</option>
-                                </select>
-                            </div>
-                            
-                            <div class="form-group">
-                                <label class="form-label">Edit Permission</label>
-                                <select class="form-input" id="edit-permission">
-                                    <option value="owner">Owner Only</option>
-                                    <option value="authorized">Authorized Users</option>
-                                    <option value="restricted">Restricted</option>
-                                    <option value="none">No Editing</option>
-                                </select>
-                            </div>
-                        </div>
-                        
-                        <div class="form-group" style="margin-bottom: 1rem;">
-                            <label class="form-label">Authorized Users</label>
-                            <textarea class="form-input form-textarea" id="authorized-users" placeholder="user1@example.com, user2@example.com" style="min-height: 60px;"></textarea>
-                        </div>
-                        
-                        <div style="display: grid; grid-template-columns: 1fr auto; gap: 1rem; margin-bottom: 1rem;">
-                            <input type="password" class="form-input" id="encryption-key" placeholder="Enter encryption key (min 16 characters)">
-                            <button class="btn btn-secondary" id="generate-key">
-                                <i class="fas fa-random"></i>
-                                Generate
-                            </button>
-                        </div>
-                        
-                        <div style="display: flex; gap: 1rem;">
-                            <button class="btn btn-primary" id="encrypt-permissions">
-                                <i class="fas fa-lock"></i>
-                                Encrypt Permissions
-                            </button>
-                            <button class="btn btn-secondary" id="export-permissions">
-                                <i class="fas fa-file-export"></i>
-                                Export Config
-                            </button>
-                        </div>
-                    </div>
-                </section>
-
-                <section class="metadata-section" id="encryption-section" style="display: none;">
-                    <h2 style="margin-bottom: 1.5rem;">
-                        <i class="fas fa-lock" style="margin-right: 0.5rem; color: var(--warning);"></i>
-                        Metadata Protection
-                    </h2>
-                    
-                    <div style="background: var(--bg); padding: 1.5rem; border-radius: 0.5rem; margin-bottom: 1.5rem; border-left: 4px solid var(--warning);">
-                        <h3 style="margin-bottom: 1rem; color: var(--warning);">Metadata Locking</h3>
-                        
-                        <div style="display: grid; gap: 1rem; margin-bottom: 1.5rem;">
-                            <label style="display: flex; align-items: center; gap: 0.5rem; padding: 0.75rem; background: var(--surface); border-radius: 0.5rem; cursor: pointer;">
-                                <input type="checkbox" id="lock-basic-metadata">
-                                <i class="fas fa-info-circle" style="color: var(--primary);"></i>
-                                <span>Lock Basic Metadata (Title, Description, Author, Keywords)</span>
-                            </label>
-                            
-                            <label style="display: flex; align-items: center; gap: 0.5rem; padding: 0.75rem; background: var(--surface); border-radius: 0.5rem; cursor: pointer;">
-                                <input type="checkbox" id="lock-exif-metadata">
-                                <i class="fas fa-camera" style="color: var(--success);"></i>
-                                <span>Lock EXIF Metadata (Camera data, GPS coordinates)</span>
-                            </label>
-                            
-                            <label style="display: flex; align-items: center; gap: 0.5rem; padding: 0.75rem; background: var(--surface); border-radius: 0.5rem; cursor: pointer;">
-                                <input type="checkbox" id="lock-xmp-metadata">
-                                <i class="fas fa-copyright" style="color: var(--error);"></i>
-                                <span>Lock XMP Metadata (Rights, Creator, Subject)</span>
-                            </label>
-                        </div>
-                        
-                        <div class="form-group" style="margin-bottom: 1.5rem;">
-                            <label class="form-label">Lock Duration</label>
-                            <select class="form-input" id="lock-duration">
-                                <option value="permanent">Permanent</option>
-                                <option value="1hour">1 Hour</option>
-                                <option value="24hours">24 Hours</option>
-                                <option value="7days">7 Days</option>
-                                <option value="30days">30 Days</option>
-                            </select>
-                        </div>
-                        
-                        <div style="display: flex; gap: 1rem;">
-                            <button class="btn btn-warning" id="apply-metadata-locks">
-                                <i class="fas fa-lock"></i>
-                                Apply Locks
-                            </button>
-                            <button class="btn btn-success" id="encrypt-metadata">
-                                <i class="fas fa-shield-alt"></i>
-                                Encrypt Metadata
-                            </button>
-                            <button class="btn btn-secondary" id="decrypt-metadata">
-                                <i class="fas fa-unlock"></i>
-                                Decrypt Metadata
-                            </button>
-                        </div>
-                    </div>
-                </section>
-
-                <section class="metadata-section" id="hashing-section" style="display: none;">
-                    <h2 style="margin-bottom: 1.5rem;">
-                        <i class="fas fa-fingerprint" style="margin-right: 0.5rem; color: var(--success);"></i>
-                        Document Hashing & Integrity
-                    </h2>
-                    
                     <div style="background: var(--bg); padding: 1.5rem; border-radius: 0.5rem; margin-bottom: 1.5rem; border-left: 4px solid var(--success);">
-                        <h3 style="margin-bottom: 1rem; color: var(--success);">Hash Generation</h3>
-                        
-                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
-                            <div class="form-group">
-                                <label class="form-label">Hash Algorithm</label>
-                                <select class="form-input" id="hash-algorithm">
-                                    <option value="sha256">SHA-256 (Recommended)</option>
-                                    <option value="sha512">SHA-512</option>
-                                    <option value="sha1">SHA-1</option>
-                                    <option value="md5">MD5</option>
-                                    <option value="blake2">BLAKE2</option>
-                                </select>
-                            </div>
-                            
-                            <div class="form-group">
-                                <label class="form-label">Hash Scope</label>
-                                <select class="form-input" id="hash-scope">
-                                    <option value="full">Full Document</option>
-                                    <option value="content">Content Only</option>
-                                    <option value="metadata">Metadata Only</option>
-                                    <option value="combined">Content + Metadata</option>
-                                </select>
-                            </div>
-                        </div>
-                        
-                        <div style="display: flex; gap: 1rem; margin-bottom: 1rem;">
-                            <button class="btn btn-success" id="generate-hash">
-                                <i class="fas fa-play"></i>
-                                Generate Hash
-                            </button>
-                            <button class="btn btn-primary" id="verify-integrity">
-                                <i class="fas fa-check-circle"></i>
-                                Verify Integrity
-                            </button>
-                            <button class="btn btn-secondary" id="export-hash">
-                                <i class="fas fa-file-export"></i>
-                                Export Hash
-                            </button>
-                        </div>
-                        
-                        <div id="hash-results" style="font-family: monospace; background: var(--surface); padding: 1rem; border-radius: 0.5rem; min-height: 100px; margin-bottom: 1rem; border: 1px solid var(--border);">
-                            No hashes generated yet...
-                        </div>
-                        
-                        <div style="display: flex; gap: 1rem;">
-                            <button class="btn btn-secondary" id="copy-hash">
-                                <i class="fas fa-copy"></i>
-                                Copy Hash
-                            </button>
-                            <button class="btn btn-secondary" id="save-hash-file">
-                                <i class="fas fa-save"></i>
-                                Save to File
-                            </button>
-                        </div>
+                        <p style="margin-bottom: 1rem;">This will write metadata, lock permissions, and produce the final hash.</p>
+                        <button class="btn btn-success" id="finalize-file">
+                            <i class="fas fa-magic"></i>
+                            Finalize
+                        </button>
+                        <div id="finalize-result" style="font-family: monospace; background: var(--surface); padding: 1rem; border-radius: 0.5rem; min-height: 60px; margin-top: 1rem; border: 1px solid var(--border);"></div>
                     </div>
                 </section>
             </main>
@@ -971,16 +800,8 @@
                     document.getElementById('metadata-section').style.display = 'block';
                     fileListSection.style.display = 'block';
                     break;
-                case 'security':
-                    document.getElementById('security-section').style.display = 'block';
-                    fileListSection.style.display = 'block';
-                    break;
-                case 'encryption':
-                    document.getElementById('encryption-section').style.display = 'block';
-                    fileListSection.style.display = 'block';
-                    break;
-                case 'hashing':
-                    document.getElementById('hashing-section').style.display = 'block';
+                case 'finalize':
+                    document.getElementById('finalize-section').style.display = 'block';
                     fileListSection.style.display = 'block';
                     break;
             }
@@ -1005,10 +826,12 @@
         async function processFiles(files) {
             showLoading('Processing uploaded files...');
 
-            const uploadPromises = Array.from(files).map(file => {
+            const uploadPromises = Array.from(files)
+                .filter(f => f.name.toLowerCase().endsWith('.pdf'))
+                .map(file => {
                 const formData = new FormData();
                 formData.append('file', file);
-                return fetch('https://universalmeta.onrender.com/api/upload', {
+                return fetch('/api/upload', {
                     method: 'POST',
                     body: formData
                 }).then(response => {
@@ -1048,7 +871,7 @@
                     <div class="file-name">${fileObj.name}</div>
                     <div class="file-details">
                         ${formatFileSize(fileObj.size)} • ${fileObj.extension ? fileObj.extension.toUpperCase() : 'UNKNOWN'}
-                        <span class="status status-success">Processed</span>
+                        <span class="status ${fileObj.status === 'processed' ? 'status-success' : 'status-warning'}">${fileObj.status === 'processed' ? 'Processed' : 'Uploaded'}</span>
                     </div>
                 </div>
                 <div class="file-actions">
@@ -1188,7 +1011,7 @@
             };
             
             try {
-                const response = await fetch(`https://universalmeta.onrender.com/api/metadata/${appState.currentFile.id}`, {
+                const response = await fetch(`/api/metadata/${appState.currentFile.id}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ metadata })
@@ -1240,8 +1063,27 @@
             customFields.appendChild(fieldDiv);
         }
 
-        function downloadFile(fileId) {
-            showNotification('Download functionality requires a server-side route not included in this example.', 'warning');
+        async function downloadFile(fileId) {
+            try {
+                const response = await fetch(`/api/download/${fileId}`);
+                if (!response.ok) {
+                    showNotification('Download failed.', 'error');
+                    return;
+                }
+                const blob = await response.blob();
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                const file = appState.files.find(f => f.id == fileId);
+                link.href = url;
+                link.download = (file && file.name) ? file.name : 'document.pdf';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(url);
+            } catch (err) {
+                showNotification('Download failed.', 'error');
+                console.error(err);
+            }
         }
 
         function removeFile(fileId) {
@@ -1259,7 +1101,43 @@
             }
         }
 
-        // Security Functions
+        // Finalize
+        document.addEventListener('click', function(e) {
+            if (e.target && e.target.id === 'finalize-file') {
+                finalizeCurrentFile();
+            }
+        });
+
+        async function finalizeCurrentFile() {
+            if (!appState.currentFile) {
+                showNotification('Select a file first', 'warning');
+                return;
+            }
+            showLoading('Finalizing document...');
+            try {
+                const response = await fetch(`/api/finalize/${appState.currentFile.id}`, {
+                    method: 'POST'
+                });
+                if (!response.ok) throw new Error('Finalize failed');
+                const result = await response.json();
+                appState.currentFile.status = 'processed';
+                appState.currentFile.processed = true;
+                appState.currentFile.hasDocumentHash = true;
+                appState.currentFile.documentHash = result.documentHash;
+                updateFileStatus(appState.currentFile.id, 'processed');
+                updateSecurityStatistics();
+                const out = document.getElementById('finalize-result');
+                if (out) out.textContent = `Hash: ${result.documentHash}`;
+                showNotification('Finalize completed successfully!', 'success');
+            } catch (err) {
+                showNotification('Finalize failed.', 'error');
+                console.error(err);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // Security Functions (legacy UI removed)
         async function encryptDocumentPermissions() {
             if (appState.selectedFiles.length === 0) {
                 showNotification('Please select files to encrypt permissions for', 'warning');
@@ -1276,7 +1154,7 @@
             };
 
             const promises = appState.selectedFiles.map(fileId => {
-                return fetch(`https://universalmeta.onrender.com/api/security/${fileId}`, {
+                return fetch(`/api/security/${fileId}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ action: 'encryptPermissions', key: encryptionKey, permissions })
@@ -1350,7 +1228,7 @@
             showLoading('Applying metadata locks...');
 
             const promises = appState.selectedFiles.map(fileId => {
-                return fetch(`https://universalmeta.onrender.com/api/security/${fileId}`, {
+                return fetch(`/api/security/${fileId}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ action: 'applyMetadataLocks', locks: { basic: lockBasic, exif: lockExif, xmp: lockXmp, duration } })
@@ -1389,7 +1267,7 @@
             showLoading('Encrypting metadata...');
 
             const promises = appState.selectedFiles.map(fileId => {
-                return fetch(`https://universalmeta.onrender.com/api/security/${fileId}`, {
+                return fetch(`/api/security/${fileId}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ action: 'encryptMetadata', key })
@@ -1428,7 +1306,7 @@
             showLoading('Decrypting metadata...');
 
             const promises = appState.selectedFiles.map(fileId => {
-                return fetch(`https://universalmeta.onrender.com/api/security/${fileId}`, {
+                return fetch(`/api/security/${fileId}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ action: 'decryptMetadata', key })
@@ -1471,7 +1349,7 @@
             let results = '';
             const hashPromises = appState.selectedFiles.map(async fileId => {
                 try {
-                    const response = await fetch(`https://universalmeta.onrender.com/api/hash/${fileId}`, {
+                    const response = await fetch(`/api/hash/${fileId}`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ algorithm, scope })
@@ -1603,4 +1481,3 @@
     </script>
 </body>
 </html>
-}
