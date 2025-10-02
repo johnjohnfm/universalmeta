@@ -299,6 +299,11 @@ function encryptPdfWithQpdf(inputPath) {
 
 // --- API Endpoints ---
 
+// Health check endpoint (no auth required for Render)
+app.get('/health', (req, res) => {
+    res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
 // Endpoint to handle file uploads (sanitize-only; defer metadata/encrypt/hash)
 app.post('/api/upload', uploadRateLimit, upload.single('file'), async (req, res) => {
     let uploadedFilePath = null;
