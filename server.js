@@ -118,6 +118,11 @@ app.use(express.json());
 // Serve the front-end files from the 'frontend' directory
 app.use(express.static('frontend'));
 
+// Serve the main HTML file at root
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'frontend', 'universalmeta002.html'));
+});
+
 // Apply authentication to API routes only (not frontend static files)
 app.use('/api', authMiddleware);
 
