@@ -6,4 +6,28 @@ services:
     autoDeploy: true
     dockerfilePath: ./Dockerfile
     healthCheckPath: /api/files
-
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3000
+      - key: AUTH_ENABLED
+        sync: false  # Set this in Render Dashboard
+      - key: AUTH_USERNAME
+        sync: false  # Set this in Render Dashboard
+      - key: AUTH_PASSWORD
+        sync: false  # Set this in Render Dashboard (use a strong password!)
+      - key: CORS_ORIGIN
+        sync: false  # Set to your Render URL or custom domain
+      - key: RATE_LIMIT_WINDOW_MS
+        value: 900000
+      - key: RATE_LIMIT_MAX_REQUESTS
+        value: 100
+      - key: UPLOAD_RATE_LIMIT_WINDOW_MS
+        value: 3600000
+      - key: UPLOAD_RATE_LIMIT_MAX_REQUESTS
+        value: 10
+      - key: MAX_FILE_AGE_MS
+        value: 3600000
+      - key: CLEANUP_INTERVAL_MS
+        value: 600000
