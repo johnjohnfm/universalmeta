@@ -159,7 +159,7 @@ const filesDb = {};
 function extractMetadata(file, author) {
     // Simulated, PDF-centric metadata extraction
     const baseName = (file.originalname || 'document').replace(/\.pdf$/i, '');
-    const defaultAuthor = author || 'Author';
+    const defaultAuthor = author || '';
     
     const metadata = {
         basic: {
@@ -167,8 +167,8 @@ function extractMetadata(file, author) {
             description: '',
             author: defaultAuthor,
             keywords: [],
-            producer: defaultAuthor,  // Default to author
-            creator: defaultAuthor    // Default to author (Content Creator)
+            producer: '',  // Leave blank - will default to author on finalize
+            creator: ''    // Leave blank - will default to author on finalize
         },
         pdf: {
             pages: null // Placeholder
