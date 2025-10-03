@@ -113,25 +113,38 @@
             display: flex;
             padding: 24px 16px;
             gap: 24px;
-            max-width: 350px;
+            max-width: 1200px;
             margin: 0 auto;
             width: 100%;
+            justify-content: center;
         }
 
         .sidebar {
-            width: 100%;
+            width: 280px;
             background: var(--input-bg);
             border-radius: 5px;
             box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
             padding: 1.5rem;
             height: fit-content;
+            flex-shrink: 0;
         }
 
         .content-area {
-            flex: 1;
+            width: 400px;
             display: flex;
             flex-direction: column;
             gap: 24px;
+            flex-shrink: 0;
+        }
+
+        .files-sidebar {
+            width: 280px;
+            background: var(--input-bg);
+            border-radius: 5px;
+            box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
+            padding: 1.5rem;
+            height: fit-content;
+            flex-shrink: 0;
         }
 
         .upload-section, .metadata-section {
@@ -508,11 +521,6 @@
                     </div>
                 </section>
 
-                <section class="file-list" id="file-list-section" style="display: none;">
-                    <h2 style="margin-bottom: 1.5rem;">Uploaded Files</h2>
-                    <div id="file-list"></div>
-                </section>
-
                 <section class="metadata-section" id="metadata-section" style="display: none;">
                     <h2 style="margin-bottom: 1.5rem;">Metadata Editor</h2>
                     
@@ -632,6 +640,11 @@
                     </div>
                 </section>
             </main>
+
+            <aside class="files-sidebar" id="files-sidebar" style="display: none;">
+                <h3 style="margin-bottom: 1rem;">Uploaded Files</h3>
+                <div id="file-list"></div>
+            </aside>
         </div>
     </div>
 
@@ -786,20 +799,20 @@
                 section.style.display = 'none';
             });
 
-            const fileListSection = document.getElementById('file-list-section');
+            const filesSidebar = document.getElementById('files-sidebar');
             
             switch(sectionName) {
                 case 'upload':
                     document.getElementById('upload-section').style.display = 'block';
-                    fileListSection.style.display = 'none'; // Hide file list in upload state
+                    filesSidebar.style.display = 'none'; // Hide files sidebar in upload state
                     break;
                 case 'metadata':
                     document.getElementById('metadata-section').style.display = 'block';
-                    fileListSection.style.display = 'block';
+                    filesSidebar.style.display = 'block'; // Show files sidebar
                     break;
                 case 'finalize':
                     document.getElementById('finalize-section').style.display = 'block';
-                    fileListSection.style.display = 'block';
+                    filesSidebar.style.display = 'block'; // Show files sidebar
                     break;
             }
         }
