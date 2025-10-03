@@ -554,6 +554,14 @@
                                 <label class="form-label">Keywords (comma-separated)</label>
                                 <input type="text" class="form-input" id="meta-keywords" placeholder="tag1, tag2, tag3">
                             </div>
+                            <div class="form-group">
+                                <label class="form-label">Producer</label>
+                                <input type="text" class="form-input" id="meta-producer" placeholder="Leave blank to use Author">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Creator (Content Creator)</label>
+                                <input type="text" class="form-input" id="meta-creator" placeholder="Leave blank to use Author">
+                            </div>
                         </div>
                     </div>
 
@@ -968,6 +976,8 @@
             document.getElementById('meta-description').value = metadata.basic?.description || '';
             document.getElementById('meta-author').value = metadata.basic?.author || '';
             document.getElementById('meta-keywords').value = metadata.basic?.keywords?.join(', ') || '';
+            document.getElementById('meta-producer').value = metadata.basic?.producer || '';
+            document.getElementById('meta-creator').value = metadata.basic?.creator || '';
             
             // EXIF metadata
             if (metadata.exif) {
@@ -995,7 +1005,9 @@
                     title: document.getElementById('meta-title').value,
                     description: document.getElementById('meta-description').value,
                     author: document.getElementById('meta-author').value,
-                    keywords: document.getElementById('meta-keywords').value.split(',').map(k => k.trim())
+                    keywords: document.getElementById('meta-keywords').value.split(',').map(k => k.trim()),
+                    producer: document.getElementById('meta-producer').value,
+                    creator: document.getElementById('meta-creator').value
                 },
                 exif: {
                     make: document.getElementById('exif-make').value,
