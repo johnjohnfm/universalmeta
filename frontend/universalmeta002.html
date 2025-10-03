@@ -509,21 +509,8 @@
                 </section>
 
                 <section class="file-list" id="file-list-section">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-                        <h2>Uploaded Files</h2>
-                        <div>
-                            <button class="btn btn-secondary" id="select-all-btn">
-                                <i class="fas fa-check-square"></i>
-                                Select All
-                            </button>
-                            <button class="btn btn-primary" id="process-selected-btn">
-                                <i class="fas fa-play"></i>
-                                Process Selected
-                            </button>
-                        </div>
-                    </div>
-                    <div id="file-list">
-                        </div>
+                    <h2 style="margin-bottom: 1.5rem;">Uploaded Files</h2>
+                    <div id="file-list"></div>
                 </section>
 
                 <section class="metadata-section" id="metadata-section" style="display: none;">
@@ -709,10 +696,6 @@
                 e.preventDefault();
                 uploadZone.classList.remove('dragover');
             });
-
-            // File operations
-            document.getElementById('select-all-btn').addEventListener('click', selectAllFiles);
-            document.getElementById('process-selected-btn').addEventListener('click', processSelectedFiles);
 
             // Metadata editor
             document.getElementById('add-custom-field').addEventListener('click', addCustomField);
@@ -912,43 +895,21 @@
             return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
         }
 
-        function toggleFileSelection(fileId) {
-            const file = appState.files.find(f => f.id == fileId);
+        function updateFileStatus(fileId, status) {
             const fileElement = document.querySelector(`[data-file-id="${fileId}"]`);
-            
-            if (file) {
-                file.selected = !file.selected;
-                fileElement.classList.toggle('selected', file.selected);
-                
-                if (file.selected && !appState.selectedFiles.includes(fileId)) {
-                    appState.selectedFiles.push(fileId);
-                } else if (!file.selected) {
-                    appState.selectedFiles = appState.selectedFiles.filter(id => id != fileId);
+            if (fileElement) {
+                const statusElement = fileElement.querySelector('.status');
+                if (statusElement) {
+                    statusElement.className = 'status';
+                    if (status === 'processed') {
+                        statusElement.classList.add('status-success');
+                        statusElement.textContent = 'Processed';
+                    } else {
+                        statusElement.classList.add('status-warning');
+                        statusElement.textContent = 'Uploaded';
+                    }
                 }
             }
-        }
-
-        function selectAllFiles() {
-            const allSelected = appState.selectedFiles.length === appState.files.length;
-            
-            appState.files.forEach(file => {
-                file.selected = !allSelected;
-                const fileElement = document.querySelector(`[data-file-id="${file.id}"]`);
-                if (fileElement) {
-                    fileElement.classList.toggle('selected', file.selected);
-                }
-            });
-            
-            appState.selectedFiles = allSelected ? [] : appState.files.map(f => f.id);
-            
-            const btn = document.getElementById('select-all-btn');
-            btn.innerHTML = allSelected ? 
-                '<i class="fas fa-check-square"></i> Select All' : 
-                '<i class="fas fa-square"></i> Deselect All';
-        }
-
-        function processSelectedFiles() {
-            showNotification('Processing is handled automatically on upload.', 'info');
         }
 
         function editFileMetadata(fileId) {
