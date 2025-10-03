@@ -197,13 +197,19 @@
 
         .file-item {
             display: flex;
-            align-items: center;
+            flex-direction: column;
             padding: 1rem;
             border: 1px solid var(--input-border);
             border-radius: 5px;
             margin-bottom: 16px;
             transition: all 0.2s;
             cursor: pointer;
+        }
+
+        .file-item-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 0.75rem;
         }
 
         .file-item:hover {
@@ -630,8 +636,8 @@
                             <i class="fas fa-magic"></i>
                             Finalize
                         </button>
-                        <div id="finalize-result" style="font-family: monospace; background: var(--surface); padding: 1rem; border-radius: 0.5rem; min-height: 60px; margin-top: 1rem; border: 1px solid var(--border);"></div>
-                        <div id="download-section" style="display: none; text-align: center; margin-top: 1.5rem;">
+                        <div id="finalize-result" style="font-family: monospace; background: var(--surface); padding: 1rem; border-radius: 0.5rem; min-height: 60px; margin-top: 1rem; border: 1px solid var(--border); word-wrap: break-word; overflow-wrap: break-word;"></div>
+                        <div id="download-section" style="display: none; text-align: left; margin-top: 1.5rem;">
                             <button class="btn btn-primary" id="download-finalized" style="font-size: 16px; padding: 0 32px; height: 44px;">
                                 <i class="fas fa-download"></i>
                                 Download
@@ -883,12 +889,14 @@
             fileItem.dataset.fileId = fileObj.id;
             
             fileItem.innerHTML = `
-                <i class="${fileObj.icon} file-icon" style="color: ${fileObj.iconColor}"></i>
-                <div class="file-info">
-                    <div class="file-name">${fileObj.name}</div>
-                    <div class="file-details">
-                        ${formatFileSize(fileObj.size)} • ${fileObj.extension ? fileObj.extension.toUpperCase() : 'UNKNOWN'}
-                        <span class="status ${fileObj.status === 'processed' ? 'status-success' : 'status-warning'}">${fileObj.status === 'processed' ? 'Processed' : 'Uploaded'}</span>
+                <div class="file-item-header">
+                    <i class="${fileObj.icon} file-icon" style="color: ${fileObj.iconColor}"></i>
+                    <div class="file-info">
+                        <div class="file-name">${fileObj.name}</div>
+                        <div class="file-details">
+                            ${formatFileSize(fileObj.size)} • ${fileObj.extension ? fileObj.extension.toUpperCase() : 'UNKNOWN'}
+                            <span class="status ${fileObj.status === 'processed' ? 'status-success' : 'status-warning'}">${fileObj.status === 'processed' ? 'Processed' : 'Uploaded'}</span>
+                        </div>
                     </div>
                 </div>
                 <div class="file-actions">
