@@ -323,21 +323,23 @@ function encryptPdfWithQpdf(inputPath) {
             const args = [
                 '--encrypt', userPassword, ownerPassword, '256',
                 '--print=full',              // Allow full-quality printing
-                '--modify=annotate',         // Allow annotations and form filling
+                '--modify=none',             // Block ALL modifications (most restrictive)
                 '--extract=n',               // Block text/image extraction
                 '--',                        // Terminate encryption options (256-bit uses AES by default)
                 inputPath,
                 encryptedPath
             ];
 
-            console.log('Encrypting PDF with balanced permissions:', {
+            console.log('Encrypting PDF with maximum restrictions (print only):', {
                 printing: 'allowed (full quality)',
-                annotations: 'allowed (for studying/markup)',
-                formFilling: 'allowed (for checklists/forms)',
+                formFilling: 'blocked',
+                annotations: 'blocked',
+                pageOperations: 'blocked',
+                documentAttributes: 'blocked',
                 editing: 'blocked',
                 copying: 'blocked',
                 extraction: 'blocked',
-                note: 'Page operations and document attributes may be allowed due to qpdf limitations'
+                textAccessibility: 'blocked'
             });
 
             execFile('qpdf', args, (error, stdout, stderr) => {
