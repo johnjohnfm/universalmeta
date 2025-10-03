@@ -304,6 +304,8 @@ function writePdfMetadataWithExifTool(inputPath, metadata) {
 }
 
 // Encrypt and lock permissions using qpdf with a one-time random owner password
+// Universal permissions: Allow printing, annotations, and form filling
+// Block: editing, copying, extraction, assembly
 function encryptPdfWithQpdf(inputPath) {
     return new Promise((resolve, reject) => {
         try {
@@ -317,21 +319,31 @@ function encryptPdfWithQpdf(inputPath) {
 
             const args = [
                 '--encrypt', userPassword, ownerPassword, '256',
-                '--',
-                '--disable-forms',
-                '--disallow-edit',
-                '--disallow-copy',
-                '--disallow-annotate',
-                '--disallow-modify-other',
+                '--print=full',              // Allow full-quality printing
+                '--modify=annotate',         // Allow annotations and form filling
+                '--extract=n',               // Block text/image extraction
+                '--use-aes=y',              // Use AES encryption
                 '--',
                 inputPath,
                 encryptedPath
             ];
 
-            execFile('qpdf', args, (error) => {
+            console.log('Encrypting PDF with universal permissions:', {
+                printing: 'allowed (full quality)',
+                annotations: 'allowed',
+                formFilling: 'allowed',
+                editing: 'blocked',
+                copying: 'blocked',
+                extraction: 'blocked'
+            });
+
+            execFile('qpdf', args, (error, stdout, stderr) => {
                 if (error) {
-                    return reject(new Error('Failed to encrypt PDF with qpdf'));
+                    console.error('qpdf error:', error);
+                    console.error('qpdf stderr:', stderr);
+                    return reject(new Error(`Failed to encrypt PDF with qpdf: ${error.message}`));
                 }
+                console.log('qpdf success:', stdout);
                 // Replace original with encrypted result
                 fs.rename(encryptedPath, inputPath, (renameErr) => {
                     if (renameErr) {
