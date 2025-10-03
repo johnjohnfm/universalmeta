@@ -623,6 +623,12 @@
                             Finalize
                         </button>
                         <div id="finalize-result" style="font-family: monospace; background: var(--surface); padding: 1rem; border-radius: 0.5rem; min-height: 60px; margin-top: 1rem; border: 1px solid var(--border);"></div>
+                        <div id="download-section" style="display: none; text-align: center; margin-top: 1.5rem;">
+                            <button class="btn btn-primary" id="download-finalized" style="font-size: 16px; padding: 0 32px; height: 44px;">
+                                <i class="fas fa-download"></i>
+                                Download
+                            </button>
+                        </div>
                     </div>
                 </section>
             </main>
@@ -785,7 +791,7 @@
             switch(sectionName) {
                 case 'upload':
                     document.getElementById('upload-section').style.display = 'block';
-                    fileListSection.style.display = 'block';
+                    fileListSection.style.display = 'none'; // Hide file list in upload state
                     break;
                 case 'metadata':
                     document.getElementById('metadata-section').style.display = 'block';
@@ -1004,6 +1010,13 @@
                 updateFileStatus(appState.currentFile.id, 'processed');
                 updateSecurityStatistics();
                 showNotification('Metadata saved successfully!', 'success');
+                
+                // Auto-transition to finalize section after save
+                setTimeout(() => {
+                    showSection('finalize');
+                    document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
+                    document.querySelector('[data-section="finalize"]').classList.add('active');
+                }, 500);
             } catch (error) {
                 showNotification('Failed to save metadata.', 'error');
                 console.error('Error saving metadata:', error);
@@ -1108,6 +1121,15 @@
                 updateSecurityStatistics();
                 const out = document.getElementById('finalize-result');
                 if (out) out.textContent = `Hash: ${result.documentHash}`;
+                
+                // Show download button
+                const downloadSection = document.getElementById('download-section');
+                if (downloadSection) {
+                    downloadSection.style.display = 'block';
+                    const downloadBtn = document.getElementById('download-finalized');
+                    downloadBtn.onclick = () => downloadFile(appState.currentFile.id);
+                }
+                
                 showNotification('Finalize completed successfully!', 'success');
             } catch (err) {
                 showNotification('Finalize failed.', 'error');
