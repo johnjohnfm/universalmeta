@@ -240,16 +240,33 @@ function computeFileHash(filePath, algorithm = 'sha256') {
 // Write metadata (including XMP) to PDF using ExifTool
 function writePdfMetadataWithExifTool(inputPath, metadata) {
     return new Promise((resolve, reject) => {
-        // Get values with defaults
-        const author = (metadata && metadata.basic && metadata.basic.author) || 'Author';
-        const producer = (metadata && metadata.basic && metadata.basic.producer) || author;
-        const creator = (metadata && metadata.basic && metadata.basic.creator) || author;
+        // Get values - handle empty strings properly
+        const authorValue = metadata?.basic?.author;
+        const producerValue = metadata?.basic?.producer;
+        const creatorValue = metadata?.basic?.creator;
+        
+        // Use author if provided, otherwise default to 'Author'
+        // But allow empty strings if explicitly set
+        const author = (authorValue !== undefined && authorValue !== null) 
+            ? (authorValue || 'Author') 
+            : 'Author';
+        
+        // Producer: use provided value, or fall back to author, or blank if author is blank
+        const producer = (producerValue !== undefined && producerValue !== null && producerValue !== '')
+            ? producerValue
+            : author;
+        
+        // Creator: same logic as producer
+        const creator = (creatorValue !== undefined && creatorValue !== null && creatorValue !== '')
+            ? creatorValue
+            : author;
         
         console.log('Writing metadata with ExifTool:', {
             author,
             producer,
             creator,
-            title: metadata?.basic?.title
+            title: metadata?.basic?.title,
+            rawValues: { authorValue, producerValue, creatorValue }
         });
         
         // Map simple metadata fields to ExifTool args. Extend as needed.
