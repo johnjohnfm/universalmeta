@@ -245,6 +245,13 @@ function writePdfMetadataWithExifTool(inputPath, metadata) {
         const producer = (metadata && metadata.basic && metadata.basic.producer) || author;
         const creator = (metadata && metadata.basic && metadata.basic.creator) || author;
         
+        console.log('Writing metadata with ExifTool:', {
+            author,
+            producer,
+            creator,
+            title: metadata?.basic?.title
+        });
+        
         // Map simple metadata fields to ExifTool args. Extend as needed.
         const args = [
             '-overwrite_original',
@@ -265,10 +272,15 @@ function writePdfMetadataWithExifTool(inputPath, metadata) {
             inputPath
         ].filter(Boolean);
 
-        execFile('exiftool', args, (error) => {
+        console.log('ExifTool args:', args);
+
+        execFile('exiftool', args, (error, stdout, stderr) => {
             if (error) {
-                return reject(new Error('Failed to write metadata with ExifTool'));
+                console.error('ExifTool error:', error);
+                console.error('ExifTool stderr:', stderr);
+                return reject(new Error(`Failed to write metadata with ExifTool: ${error.message}`));
             }
+            console.log('ExifTool success:', stdout);
             resolve(inputPath);
         });
     });
