@@ -842,7 +842,14 @@
                     addFileToList(fileObj);
                 });
                 updateSecurityStatistics();
-                showNotification(`Successfully processed ${results.length} files!`, 'success');
+                showNotification(`Successfully uploaded ${results.length} file(s)!`, 'success');
+                
+                // Auto-transition: Select first file and go to metadata editor
+                if (results.length > 0) {
+                    setTimeout(() => {
+                        editFileMetadata(results[0].id);
+                    }, 500);
+                }
             } catch (error) {
                 showNotification('File upload failed.', 'error');
                 console.error('Error processing files:', error);
