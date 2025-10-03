@@ -325,8 +325,7 @@ function encryptPdfWithQpdf(inputPath) {
                 '--print=full',              // Allow full-quality printing
                 '--modify=annotate',         // Allow annotations and form filling
                 '--extract=n',               // Block text/image extraction
-                '--use-aes=y',               // Use AES encryption (must be before --)
-                '--',                        // Terminate encryption options
+                '--',                        // Terminate encryption options (256-bit uses AES by default)
                 inputPath,
                 encryptedPath
             ];
