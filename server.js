@@ -16,6 +16,9 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const NODE_ENV = process.env.NODE_ENV || 'development';
 
+// Trust proxy for Render.com (fixes rate limiting)
+app.set('trust proxy', 1);
+
 // Ensure uploads directory exists
 const uploadsDir = path.join(__dirname, 'uploads');
 if (!fs.existsSync(uploadsDir)) {
@@ -322,8 +325,8 @@ function encryptPdfWithQpdf(inputPath) {
                 '--print=full',              // Allow full-quality printing
                 '--modify=annotate',         // Allow annotations and form filling
                 '--extract=n',               // Block text/image extraction
-                '--use-aes=y',              // Use AES encryption
-                '--',
+                '--use-aes=y',               // Use AES encryption (must be before --)
+                '--',                        // Terminate encryption options
                 inputPath,
                 encryptedPath
             ];
